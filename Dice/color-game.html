@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Game</title>
+    <style>
+        * { margin:0; padding:0; box-sizing: border-box; }
+
+        body {
+            background: #2a2a2e url('pc_dark_bg.png') no-repeat center top;
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            overflow-x: hidden;
+            color: #fff;
+            user-select: none;
+        }
+
+        /* ========= 顶部结果栏 ========= */
+        .result-bar {
+            width: 92%;
+            max-width: 520px;
+            background: #3a3a3e;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-top: 12px;
+            text-align: center;
+            font-size: 14px;
+            color: #aaa;
+            border: 1px solid #444;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .result-bar.win { color: #ffd700; font-weight: bold; font-size: 15px; }
+        .result-bar.lose { color: #ff8888; }
+
+        /* ========= 主游戏区 ========= */
+        .game-container {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ========= 派彩面板 ========= */
+        .payout-panel {
+            position: absolute;
+            left: 8px;
+            top: 70px;
+            background: rgba(50,50,55,0.9);
+            border-radius: 8px;
+            padding: 8px 12px;
+            border: 1px solid #555;
+            z-index: 20;
+            backdrop-filter: blur(4px);
+        }
+        .payout-title { font-size: 13px; color: #ccc; margin-bottom: 6px; text-align: center; }
+        .payout-item {
+            display: flex; align-items: center; gap: 5px;
+            margin: 4px 0; font-size: 12px;
+        }
+        .payout-check {
+            width: 14px; height: 14px;
+            border: 1px solid #666;
+            border-radius: 3px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; color: #444;
+        }
+        .payout-check.checked { background: #2a5; border-color: #4c7; color: #fff; }
+        .payout-multiplier { color: #ffd700; font-weight: bold; margin-left: auto; }
+
+        /* ========= 游戏机 ========= */
+        .machine-wrapper {
+            position: relative;
+            width: 314px;
+            height: 499px;
+            margin-top: 10px;
+        }
+        .box-img {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: contain;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 装饰灯 */
+        .lights-left {
+            position: absolute;
+            left: -20px; top: 220px;
+            width: 50px; height: 150px;
+            z-index: 0;
+        }
+        .light-bulb {
+            position: absolute;
+            width: 8px; height: 8px;
+            background: #ffdd44;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #ffdd44, 0 0 12px #ffaa00;
+            animation: blink 1.5s ease-in-out infinite alternate;
+        }
+        .light-bulb:nth-child(1) { left: 8px; top: 0; animation-delay: 0s; }
+        .light-bulb:nth-child(2) { left: 30px; top: 25px; animation-delay: 0.3s; }
+        .light-bulb:nth-child(3) { left: 4px; top: 55px; animation-delay: 0.6s; }
+        .light-bulb:nth-child(4) { left: 35px; top: 85px; animation-delay: 0.9s; }
+        .light-bulb:nth-child(5) { left: 12px; top: 115px; animation-delay: 1.2s; }
+        .light-bulb:nth-child(6) { left: 38px; top: 140px; animation-delay: 0.5s; }
+        @keyframes blink {
+            0% { opacity: 0.4; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.1); }
+        }
+
+        /* ========= CSS 3D 骰子 ========= */
+        .dice-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .dice-scene { position: absolute; }
+        .dice-3d {
+            width: 21px; height: 21px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: none;
+        }
+        .dice-face {
+            position: absolute;
+            width: 21px; height: 21px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: bold;
+            color: rgba(0,0,0,0.45);
+            backface-visibility: hidden;
+            box-shadow: inset 0 0 6px rgba(0,0,0,0.15);
+        }
+        .dice-face.front  { transform: rotateY(0deg) translateZ(10.5px); }
+        .dice-face.back   { transform: rotateY(180deg) translateZ(10.5px); }
+        .dice-face.right  { transform: rotateY(90deg) translateZ(10.5px); }
+        .dice-face.left   { transform: rotateY(-90deg) translateZ(10.5px); }
+        .dice-face.top    { transform: rotateX(90deg) translateZ(10.5px); }
+        .dice-face.bottom { transform: rotateX(-90deg) translateZ(10.5px); }
+
+        .dice-shadow {
+            position: absolute;
+            width: 16px; height: 5px;
+            background: rgba(0,0,0,0.18);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* ========= 提示文字 ========= */
+        .hint-text {
+            position: absolute;
+            top: 300px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            white-space: nowrap;
+            z-index: 5;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        .hint-text.win { color: #ffd700; font-size: 20px; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        .hint-text.lose { color: #ff8888; }
+
+        /* ========= 颜色面板 ========= */
+        .color-panel-wrapper {
+            width: 92%;
+            max-width: 420px;
+            position: relative;
+            margin-top: 16px;
+        }
+        .color-panel {
+            background: #4a4a4e;
+            border-radius: 12px;
+            padding: 14px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            border: 1px solid #555;
+            position: relative;
+        }
+        .color-btn-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .color-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            overflow: visible;
+        }
+        .color-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 5px 14px rgba(0,0,0,0.4); }
+        .color-btn:active { transform: translateY(0) scale(0.98); }
+        .color-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .color-btn.selected { border-color: #fff !important; box-shadow: 0 0 12px rgba(255,255,255,0.5); }
+        .color-btn.yellow { background: #f5d836; }
+        .color-btn.white   { background: #f5f0e8; }
+        .color-btn.pink    { background: #ff4d9e; }
+        .color-btn.blue    { background: #2080ff; }
+        .color-btn.orange  { background: #ff7010; }
+        .color-btn.green   { background: #30e070; }
+
+        .chip-stack {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 5;
+        }
+        .chip {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: #8e44ad;
+            border: 2px solid #6c3483;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .chip:nth-child(1) { margin-top: 0; }
+        .chip:nth-child(2) { margin-top: -6px; }
+        .chip:nth-child(3) { margin-top: -12px; }
+        .chip:nth-child(4) { margin-top: -18px; }
+        .chip:nth-child(5) { margin-top: -24px; }
+        .chip:nth-child(6) { margin-top: -30px; }
+        .chip:nth-child(7) { margin-top: -36px; }
+        .chip:nth-child(8) { margin-top: -42px; }
+
+        .bet-amount-label {
+            margin-top: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #ffd700;
+            background: rgba(0,0,0,0.3);
+            padding: 2px 8px;
+            border-radius: 10px;
+            min-width: 50px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .bet-amount-label.show { opacity: 1; }
+
+        /* ========= 投注控制区（截图风格） ========= */
+        .bet-control-wrapper {
+            width: 92%;
+            max-width: 420px;
+            background: #4a4a4e;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 10px;
+            border: 1px solid #555;
+        }
+
+        /* 清除按钮（在颜色面板右下角） */
+        .clear-btn {
+            position: absolute;
+            bottom: -40px; right: 0;
+            width: 38px; height: 38px;
+            background: #555;
+            border: 1px solid #666;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .clear-btn:hover { background: #666; }
+        .clear-btn svg { width: 18px; height: 18px; fill: #ccc; }
+
+        /* 分区标题 */
+        .bet-section-title {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .bet-section-title .info-icon {
+            display: inline-flex;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            border: 1px solid #666;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #666;
+            cursor: default;
+        }
+
+        /* 金额行 */
+        .bet-amount-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .bet-input {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: #3a3a3e;
+            border-radius: 8px;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            gap: 2px;
+        }
+        .currency-sign {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ccc;
+            margin-right: 4px;
+        }
+        .bet-input-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #fff;
+            min-width: 40px;
+        }
+        .decimal-part {
+            font-size: 16px;
+            color: #888;
+            margin-right: auto;
+        }
+        .bet-arrows {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .arrow-btn {
+            background: #555;
+            border: none;
+            color: #ccc;
+            font-size: 8px;
+            width: 20px; height: 14px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding: 0;
+        }
+        .arrow-btn:hover { background: #666; }
+
+        .bet-ops {
+            display: flex;
+            gap: 6px;
+        }
+        .op-btn {
+            background: #555;
+            border: 1px solid #666;
+            border-radius: 6px;
+            color: #ccc;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .op-btn:hover { background: #666; color: #fff; }
+
+        /* 快捷金额 */
+        .quick-amount-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        .quick-btn {
+            background: #3a3a3e;
+            border: 1px solid #555;
+            border-radius: 6px;
+            color: #ddd;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 8px 0;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .quick-btn:hover { background: #505050; border-color: #888; color: #fff; }
+        .quick-btn.active { background: #6a6a6e; border-color: #aaa; color: #fff; }
+
+        /* 投注数量 */
+        .bet-quantity-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .qty-btn {
+            flex: 1;
+            background: #3a3a3e;
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: #ddd;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px 0;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .qty-btn:hover { background: #505050; border-color: #888; color: #fff; }
+        .qty-btn.active { background: #6a6a6e; border-color: #0a0; color: #0f0; box-shadow: 0 0 8px rgba(0,255,0,0.3); }
+
+        /* 开始按钮 */
+        .start-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #2a8a2a;
+            color: #fff;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 3px 10px rgba(42,138,42,0.3);
+        }
+        .start-btn:hover:not(:disabled) { background: #3a9a3a; transform: translateY(-1px); }
+        .start-btn:active:not(:disabled) { transform: translateY(1px); }
+        .start-btn:disabled {
+            background: #555;
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* ========= 底部信息栏 ========= */
+        .bottom-bar {
+            width: 92%;
+            max-width: 420px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding: 10px 16px;
+            background: #3a3a3e;
+            border-radius: 8px;
+            border: 1px solid #555;
+        }
+        .amount-section {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .amount-label { font-size: 13px; color: #aaa; }
+        .amount-value {
+            font-size: 13px;
+            color: #0f0;
+            font-weight: bold;
+        }
+        .amount-value::before {
+            content: '';
+            display: inline-block;
+            width: 12px; height: 12px;
+            background: #0f0;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .balance-display {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        /* ========= 金币雨 ========= */
+        .coin {
+            position: fixed;
+            font-size: 22px;
+            pointer-events: none;
+            animation: coinFall 1.4s ease-out forwards;
+            z-index: 1000;
+        }
+        @keyframes coinFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(280px) rotate(720deg); opacity: 0; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+        }
+        .pulse { animation: pulse 0.5s ease-in-out; }
+
+        @media (max-width: 400px) {
+            .machine-wrapper { transform: scale(0.85); margin-top: 0; }
+            .color-panel { gap: 8px; padding: 10px; }
+            .payout-panel { left: 2px; padding: 6px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 结果栏 -->
+    <div class="result-bar" id="resultBar">游戏结果将会显示</div>
+
+    <!-- 主游戏区 -->
+    <div class="game-container">
+
+        <!-- 派彩面板 -->
+        <div class="payout-panel">
+            <div class="payout-title">派彩</div>
+            <div class="payout-item">
+                <div class="payout-check" id="check1">&#10003;</div>
+                <div>1个</div>
+                <div class="payout-multiplier">x2</div>
+            </div>
+            <div class="payout-item">
+                <div class="payout-check" id="check2">&#10003;</div>
+                <div>2个</div>
+                <div class="payout-multiplier">x3</div>
+            </div>
+            <div class="payout-item">
+                <div class="payout-check" id="check3">&#10003;</div>
+                <div>3个</div>
+                <div class="payout-multiplier">x16.7</div>
+            </div>
+        </div>
+
+        <!-- 游戏机 -->
+        <div class="machine-wrapper">
+            <img src="box.png" class="box-img" alt="Color Game Box">
+            <div class="lights-left">
+                <div class="light-bulb"></div>
+                <div class="light-bulb"></div>
+                <div class="light-bulb"></div>
+                <div class="light-bulb"></div>
+                <div class="light-bulb"></div>
+                <div class="light-bulb"></div>
+            </div>
+            <div class="hint-text" id="hintText">请选择您的颜色</div>
+            <div class="dice-container" id="diceContainer"></div>
+        </div>
+    </div>
+
+    <!-- 颜色下注面板 -->
+    <div class="color-panel-wrapper">
+        <div class="color-panel">
+            <div class="color-btn-wrapper">
+                <div class="color-btn yellow" data-color="yellow" data-index="0" onclick="addBet(this)">
+                    <div class="chip-stack" id="chips-0"></div>
+                </div>
+                <div class="bet-amount-label" id="label-0">0.00</div>
+            </div>
+            <div class="color-btn-wrapper">
+                <div class="color-btn white" data-color="white" data-index="1" onclick="addBet(this)">
+                    <div class="chip-stack" id="chips-1"></div>
+                </div>
+                <div class="bet-amount-label" id="label-1">0.00</div>
+            </div>
+            <div class="color-btn-wrapper">
+                <div class="color-btn pink" data-color="pink" data-index="2" onclick="addBet(this)">
+                    <div class="chip-stack" id="chips-2"></div>
+                </div>
+                <div class="bet-amount-label" id="label-2">0.00</div>
+            </div>
+            <div class="color-btn-wrapper">
+                <div class="color-btn blue" data-color="blue" data-index="3" onclick="addBet(this)">
+                    <div class="chip-stack" id="chips-3"></div>
+                </div>
+                <div class="bet-amount-label" id="label-3">0.00</div>
+            </div>
+            <div class="color-btn-wrapper">
+                <div class="color-btn orange" data-color="orange" data-index="4" onclick="addBet(this)">
+                    <div class="chip-stack" id="chips-4"></div>
+                </div>
+                <div class="bet-amount-label" id="label-4">0.00</div>
+            </div>
+            <div class="color-btn-wrapper">
+                <div class="color-btn green" data-color="green" data-index="5" onclick="addBet(this)">
+                    <div class="chip-stack" id="chips-5"></div>
+                </div>
+                <div class="bet-amount-label" id="label-5">0.00</div>
+            </div>
+        </div>
+        <!-- 清除按钮 -->
+        <button class="clear-btn" onclick="clearAllBets()" id="clearBtn" title="清除所有下注">
+            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+        </button>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 投注控制区（截图风格） -->
+    <div class="bet-control-wrapper">
+        <!-- 金额 -->
+        <div class="bet-section-title">
+            金额
+            <span class="info-icon">i</span>
+        </div>
+        <div class="bet-amount-row">
+            <div class="bet-input">
+                <span class="currency-sign">¥</span>
+                <span class="bet-input-value" id="betAmountDisplay">10</span>
+                <span class="decimal-part">.00</span>
+                <div class="bet-arrows">
+                    <button onclick="adjustBetAmount(1)" class="arrow-btn">▲</button>
+                    <button onclick="adjustBetAmount(-1)" class="arrow-btn">▼</button>
+                </div>
+            </div>
+            <div class="bet-ops">
+                <button onclick="adjustBetAmount(0.5)" class="op-btn">1/2</button>
+                <button onclick="adjustBetAmount(2)" class="op-btn">2×</button>
+            </div>
+        </div>
+
+        <!-- 快捷金额 -->
+        <div class="quick-amount-row">
+            <button onclick="setBetAmount(10)" class="quick-btn" data-amt="10">10.0</button>
+            <button onclick="setBetAmount(100)" class="quick-btn" data-amt="100">100.0</button>
+            <button onclick="setBetAmount(1000)" class="quick-btn" data-amt="1000">1.0k</button>
+            <button onclick="setBetAmount(10000)" class="quick-btn" data-amt="10000">10.0k</button>
+        </div>
+
+        <!-- 投注数量 -->
+        <div class="bet-section-title">投注数量</div>
+        <div class="bet-quantity-row">
+            <button onclick="setBetQuantity('inf')" class="qty-btn active" data-qty="inf">∞</button>
+            <button onclick="setBetQuantity(10)" class="qty-btn" data-qty="10">10</button>
+            <button onclick="setBetQuantity(100)" class="qty-btn" data-qty="100">100</button>
+        </div>
+
+        <!-- 开始按钮 -->
+        <button class="start-btn" id="rollBtn" onclick="rollDice()">开始摇骰</button>
+    </div>
+
+    <!-- 底部信息 -->
+    <div class="bottom-bar">
+        <div class="amount-section">
+            <span class="amount-label">金额</span>
+            <span class="amount-value" id="totalBet">0</span>
+        </div>
+        <div class="balance-display" id="balanceDisplay">1000.00</div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
