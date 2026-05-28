@@ -613,7 +613,60 @@ function onBetAmountBlur(input) {
     
     setBetAmount(value);
     updateSliderPosition();
+    
+    // 关闭 Max Bet 提示
+    closeMaxBetTip();
 }
+
+/** 切换 Max Bet 提示显示 */
+function toggleMaxBetTip(event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    const tooltip = document.getElementById('maxBetTooltip');
+    if (tooltip) {
+        const isVisible = tooltip.style.display !== 'none';
+        if (isVisible) {
+            closeMaxBetTip();
+        } else {
+            showMaxBetTip();
+        }
+    }
+}
+
+/** 显示 Max Bet 提示 */
+function showMaxBetTip() {
+    const tooltip = document.getElementById('maxBetTooltip');
+    const maxBetValue = document.getElementById('maxBetValue');
+    
+    if (tooltip && maxBetValue) {
+        const config = getBetConfig();
+        maxBetValue.textContent = config.maxBetAmount.toFixed(2);
+        tooltip.style.display = 'block';
+    }
+}
+
+/** 关闭 Max Bet 提示 */
+function closeMaxBetTip() {
+    const tooltip = document.getElementById('maxBetTooltip');
+    if (tooltip) {
+        tooltip.style.display = 'none';
+    }
+}
+
+/** 点击任意按钮关闭 Max Bet 提示 */
+function setupMaxBetTipCloseHandler() {
+    document.addEventListener('click', function(event) {
+        // 检查是否点击在按钮上
+        if (event.target.tagName === 'BUTTON') {
+            closeMaxBetTip();
+        }
+    });
+}
+
+// 初始化时设置关闭处理器
+setupMaxBetTipCloseHandler();
 
 /** 切换拖动条显示/隐藏 */
 function toggleSlider() {
@@ -826,6 +879,12 @@ function updateUI() {
     const totalBet = betAmounts.reduce((a, b) => a + b, 0);
     document.getElementById('balanceDisplay').textContent = balance.toFixed(2);
     document.getElementById('totalBet').textContent = totalBet;
+    
+    // 更新 Max Bet 显示值
+    const maxBetValue = document.getElementById('maxBetValue');
+    if (maxBetValue) {
+        maxBetValue.textContent = config.maxBetAmount.toFixed(2);
+    }
 
     for (let i = 0; i < 6; i++) {
         const chipStack = document.getElementById('chips-' + i);
