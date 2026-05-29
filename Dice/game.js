@@ -18,6 +18,7 @@ let _betQuantity = 'inf' // 投注数量：'inf'=∞(1 份)、10、100
 let balance = 0;         // 玩家余额，由 initPlayerData() 初始化
 let bets = [0, 0, 0, 0, 0, 0];  // 每种颜色的下注次数
 let betAmounts = [0, 0, 0, 0, 0, 0];  // 每种颜色的实际下注总金额
+let _lockedBetAmount = null;  // 本局锁定的下注金额（一旦下注后锁定）
 let isRolling = false;
 let _cleanupTimer = null; // finishRoll 的延迟清理定时器，防止与下次 rollDice 冲突
 
@@ -566,18 +567,22 @@ function showToast(message) {
     }, 3000);
 }
 
-/** 触发中奖边框闪烁效果 */
-function triggerWinFlash() {
-    const colorPanel = document.querySelector('.color-panel');
-    if (colorPanel) {
-        // 添加动画类
-        colorPanel.classList.add('win-flash');
-        
-        // 动画结束后移除类（0.3s * 5 次 = 1.5s）
-        setTimeout(() => {
-            colorPanel.classList.remove('win-flash');
-        }, 1500);
-    }
+/** 触发中奖格子闪烁效果 */
+function triggerWinFlash(winningColors) {
+    // winningColors: 中奖且有下注的颜色索引数组
+    if (!winningColors || winningColors.length === 0) return;
+    
+    winningColors.forEach(colorIndex => {
+        const colorBtn = document.querySelector(`.color-btn[data-index="${colorIndex}"]`);
+        if (colorBtn) {
+            colorBtn.classList.add('win-flash');
+            
+            // 动画结束后移除类（0.3s * 5 次 = 1.5s）
+            setTimeout(() => {
+                colorBtn.classList.remove('win-flash');
+            }, 1500);
+        }
+    });
 }
 
 /** 拖动条状态 */
@@ -835,6 +840,18 @@ function addBet(btn) {
     const qty = _betQuantity === 'inf' ? 1 : _betQuantity;
     const cost = qty * _betAmount;
     
+    // 检查本局下注金额是否已锁定
+    if (_lockedBetAmount !== null) {
+        // 已锁定，必须使用相同的下注金额
+        const singleBetAmount = _betQuantity === 'inf' ? 1 : _betQuantity;
+        const expectedCost = singleBetAmount * _lockedBetAmount;
+        
+        if (cost !== expectedCost) {
+            showToast(`This round's bet amount is locked at ${_lockedBetAmount}.00. Please use the same amount for all bets.`);
+            return;
+        }
+    }
+    
     // 1.3 下注次数限制检查
     if (!isRechargeUser) {
         // 统计当前已下注的颜色数量
@@ -854,6 +871,12 @@ function addBet(btn) {
     
     bets[idx] += qty;
     betAmounts[idx] += cost;  // 记录实际下注金额
+    
+    // 如果是第一次下注，锁定本局下注金额
+    if (_lockedBetAmount === null) {
+        _lockedBetAmount = _betAmount;
+    }
+    
     balance -= cost;
     updateUI();
     btn.style.transform = 'scale(0.95)';
@@ -873,6 +896,7 @@ function clearAllBets() {
     // 重置下注
     bets = [0, 0, 0, 0, 0, 0];
     betAmounts = [0, 0, 0, 0, 0, 0];
+    _lockedBetAmount = null;  // 清除所有下注时重置锁定金额
     
     // 已付费玩家需要更新最大下注金额（因为余额变化了）
     if (isRechargeUser) {
@@ -1008,6 +1032,10 @@ function finishRoll(results) {
     document.getElementById('clearBtn').disabled = false;
     document.querySelectorAll('.color-btn').forEach(b => b.disabled = false);
 
+    // 调试：打印骰子结果
+    console.log('骰子结果 (颜色索引):', results);
+    console.log('骰子结果 (颜色名称):', results.map(r => COLORS[r].label));
+    
     const resultBar = document.getElementById('resultBar');
     let totalWin = 0;
     let winMessages = [];
@@ -1024,6 +1052,7 @@ function finishRoll(results) {
             totalWin += win;
             const mult = mc === 1 ? 2 : mc === 2 ? 3 : 16;
             winMessages.push(COLORS[ci].label + '中' + mc + '个 x' + mult);
+            console.log(`颜色 ${COLORS[ci].label} (索引${ci}): 下注${bet}, 命中${mc}个, 赢得${win}`);
         }
     }
 
@@ -1049,8 +1078,17 @@ function finishRoll(results) {
         showHint('恭喜！赢得 ' + totalWin + ' 金币！', 'win');
         spawnCoins();
         
-        // 触发中奖边框闪烁效果
-        triggerWinFlash();
+        // 收集中奖且有下注的颜色索引，触发格子闪烁效果
+        const winningColors = [];
+        for (let ci = 0; ci < 6; ci++) {
+            if (betAmounts[ci] > 0) {
+                const mc = results.filter(r => r === ci).length;
+                if (mc > 0) {
+                    winningColors.push(ci);
+                }
+            }
+        }
+        triggerWinFlash(winningColors);
     } else {
         resultBar.textContent = '结果：' + resultColors + '，未命中';
         resultBar.className = 'result-bar lose';
@@ -1060,6 +1098,7 @@ function finishRoll(results) {
     // 重置下注数据（游戏结束）
     bets = [0, 0, 0, 0, 0, 0];
     betAmounts = [0, 0, 0, 0, 0, 0];
+    _lockedBetAmount = null;  // 重置本局锁定的下注金额
     
     updateUI();
     // updateUI 在 bets 清零后会禁用按钮，但结算后用户需要重新下注，按钮必须可用
