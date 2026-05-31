@@ -129,14 +129,14 @@
         }
         .dice-scene { position: absolute; }
         .dice-3d {
-            width: 21px; height: 21px;
+            width: 36px; height: 36px;
             position: relative;
             transform-style: preserve-3d;
             transition: none;
         }
         .dice-face {
             position: absolute;
-            width: 21px; height: 21px;
+            width: 36px; height: 36px;
             border-radius: 4px;
             border: 1px solid rgba(255,255,255,0.25);
             display: flex;
@@ -148,16 +148,16 @@
             backface-visibility: hidden;
             box-shadow: inset 0 0 6px rgba(0,0,0,0.15);
         }
-        .dice-face.front  { transform: rotateY(0deg) translateZ(10.5px); }
-        .dice-face.back   { transform: rotateY(180deg) translateZ(10.5px); }
-        .dice-face.right  { transform: rotateY(90deg) translateZ(10.5px); }
-        .dice-face.left   { transform: rotateY(-90deg) translateZ(10.5px); }
-        .dice-face.top    { transform: rotateX(90deg) translateZ(10.5px); }
-        .dice-face.bottom { transform: rotateX(-90deg) translateZ(10.5px); }
+        .dice-face.front  { transform: rotateY(0deg) translateZ(18px); }
+        .dice-face.back   { transform: rotateY(180deg) translateZ(18px); }
+        .dice-face.right  { transform: rotateY(90deg) translateZ(18px); }
+        .dice-face.left   { transform: rotateY(-90deg) translateZ(18px); }
+        .dice-face.top    { transform: rotateX(90deg) translateZ(18px); }
+        .dice-face.bottom { transform: rotateX(-90deg) translateZ(18px); }
 
         .dice-shadow {
             position: absolute;
-            width: 16px; height: 5px;
+            width: 28px; height: 9px;
             background: rgba(0,0,0,0.18);
             border-radius: 50%;
             pointer-events: none;
@@ -246,20 +246,21 @@
             z-index: 5;
         }
         .chip {
-            width: 24px; height: 24px;
+            width: 28px; height: 28px;
             border-radius: 50%;
-            background: #8e44ad;
-            border: 2px solid #6c3483;
+            background: url('chip.webp') no-repeat center center;
+            background-size: contain;
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 9px;
+            font-size: 11px;
             font-weight: bold;
             color: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
         }
         .chip:nth-child(1) { margin-top: 0; }
         .chip:nth-child(2) { margin-top: -5px; }
@@ -418,10 +419,13 @@
         .bet-input-value:focus {
             border-bottom: 2px solid #0f0;
         }
-        .decimal-part {
-            font-size: 14px;
-            color: #888;
-            margin-right: 4px;
+        .chip-icon {
+            display: inline-block;
+            width: 18px; height: 18px;
+            background: url('chip.webp') no-repeat center center;
+            background-size: contain;
+            margin-right: 6px;
+            vertical-align: middle;
         }
         .bet-arrows {
             display: flex;
@@ -461,6 +465,18 @@
             transition: all 0.15s;
         }
         .op-btn:hover { background: #666; color: #fff; }
+        #clearBtn {
+            background: #8b3a3a;
+            border: 1px solid #a54444;
+            color: #ff99aa;
+            font-size: 14px;
+            padding: 8px 16px;
+            font-weight: bold;
+        }
+        #clearBtn:hover {
+            background: #a54444;
+            color: #ffccdd;
+        }
 
         /* 拖动条（滑块） */
         .slider-container {
@@ -764,19 +780,16 @@
                        onblur="onBetAmountBlur(this)"
                        pattern="\d*"
                        maxlength="10">
-                <span class="decimal-part">.00</span>
+                <span class="chip-icon"></span>
                 <div class="bet-arrows">
                     <button onclick="toggleSlider()" class="arrow-btn">▲</button>
                     <button onclick="toggleSlider()" class="arrow-btn">▼</button>
                 </div>
             </div>
             <div class="bet-ops">
-                <button id="clearBtn" onclick="clearAllBets()" class="clear-btn" title="Clear All Bets">
-                    <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-                    Clear
-                </button>
                 <button onclick="adjustBetAmount(0.5)" class="op-btn">1/2</button>
                 <button onclick="adjustBetAmount(2)" class="op-btn">2×</button>
+                <button onclick="clearAllBets()" class="op-btn" id="clearBtn" title="清除所有下注">Clear</button>
             </div>
         </div>
         

@@ -244,7 +244,7 @@ function rollDiceRandom() {
 //  CSS 3D 骰子类
 // ============================================================
 
-const DICE_SIZE = 21; // 骰子边长 px（缩小一半）
+const DICE_SIZE = 36; // 骰子边长 px
 
 class Dice3D {
     /**
@@ -306,17 +306,17 @@ class Dice3D {
             face.style.position = 'absolute';
             face.style.width  = this.size + 'px';
             face.style.height = this.size + 'px';
-            face.style.borderRadius = '6px';
-            face.style.border = '1.5px solid rgba(255,255,255,0.25)';
+            face.style.borderRadius = '9px';
+            face.style.border = '2px solid rgba(255,255,255,0.25)';
             face.style.display = 'flex';
             face.style.alignItems = 'center';
             face.style.justifyContent = 'center';
-            face.style.fontSize = '10px';
+            face.style.fontSize = '16px';
             face.style.fontWeight = 'bold';
             face.style.color = 'rgba(0,0,0,0.45)';
             face.style.backgroundColor = color.hex;
             face.style.backfaceVisibility = 'hidden';
-            face.style.boxShadow = 'inset 0 0 8px rgba(0,0,0,0.15)';
+            face.style.boxShadow = 'inset 0 0 12px rgba(0,0,0,0.15)';
             dice.appendChild(face);
             this._faceEls[i] = face;
         }
@@ -944,7 +944,7 @@ function updateUI() {
                 chip.className = 'chip';
                 if (c === showCount - 1 && bets[i] > 1) {
                     chip.textContent = bets[i];
-                    chip.style.fontSize = bets[i] >= 10 ? '9px' : '10px';
+                    chip.style.fontSize = bets[i] >= 100 ? '8px' : bets[i] >= 10 ? '9px' : '11px';
                 }
                 chipStack.appendChild(chip);
             }
