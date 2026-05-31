@@ -710,6 +710,9 @@ function toggleSlider() {
     if (_sliderVisible) {
         requestAnimationFrame(() => {
             updateSliderRange();
+            // 强制浏览器回流，确保 min/max 生效后再设值
+            const s = document.getElementById('betSliderInput');
+            if (s) void s.offsetHeight;
             updateSliderPosition();
         });
     }
