@@ -5,12 +5,12 @@
 
 // -------------- 游戏配置 --------------
 const COLORS = [
-    { name: 'yellow', label: '黄色', hex: '#f5d836' },
-    { name: 'white',  label: '白色', hex: '#f5f0e8' },
-    { name: 'pink',   label: '粉色', hex: '#ff4d9e' },
-    { name: 'blue',   label: '蓝色', hex: '#2080ff' },
-    { name: 'orange', label: '橙色', hex: '#ff7010' },
-    { name: 'green',  label: '绿色', hex: '#30e070' }
+    { name: 'yellow', label: 'Yellow', hex: '#f5d836' },
+    { name: 'white',  label: 'White',  hex: '#f5f0e8' },
+    { name: 'pink',   label: 'Pink',   hex: '#ff4d9e' },
+    { name: 'blue',   label: 'Blue',   hex: '#2080ff' },
+    { name: 'orange', label: 'Orange', hex: '#ff7010' },
+    { name: 'green',  label: 'Green',  hex: '#30e070' }
 ];
 
 let _betAmount = 10;    // 每次点击的筹码价值
@@ -143,8 +143,8 @@ function setRechargeStatus(isRecharge) {
         betConfig = { ...UNRECHARGED_CONFIG };
     }
     updateUI();
-    console.log(`付费状态已切换：${isRecharge ? '已付费' : '未付费'}`);
-    console.log('当前配置：', betConfig);
+    console.log(`Recharge status: ${isRecharge ? 'Paid' : 'Free'}`);
+    console.log('Current config:', betConfig);
 }
 
 // 三个骰子的 6 面色顺序（统一相同，标准骰子布局）
@@ -693,23 +693,25 @@ setupMaxBetTipCloseHandler();
 /** 切换拖动条显示/隐藏 */
 function toggleSlider() {
     const config = getBetConfig();
-    
+
     // 未付费玩家不能拖动
     if (!isRechargeUser) {
         showToast(`Min bet: ${config.minBetAmount}`);
         return;
     }
-    
+
     _sliderVisible = !_sliderVisible;
     const slider = document.getElementById('betSlider');
     if (slider) {
         slider.style.display = _sliderVisible ? 'block' : 'none';
     }
-    
-    // 如果展开，更新滑块位置和范围
+
+    // 如果展开，等 DOM 渲染后再更新范围和位置
     if (_sliderVisible) {
-        updateSliderRange();
-        updateSliderPosition();
+        requestAnimationFrame(() => {
+            updateSliderRange();
+            updateSliderPosition();
+        });
     }
 }
 
@@ -868,7 +870,7 @@ function addBet(btn) {
     
     // 余额检查
     if (balance < cost) {
-        showHint('余额不足！', 'lose');
+        showHint('Insufficient balance!', 'lose');
         return;
     }
     
@@ -912,7 +914,7 @@ function clearAllBets() {
     updateBetAmountDisplay();
     
     updateUI();
-    showHint('已清除所有下注', '');
+    showHint('All bets cleared', '');
 }
 
 function updateUI() {
@@ -1007,7 +1009,7 @@ function rollDice() {
     const results = rollDiceRandom();
     // ================================================
 
-    showHint('摇骰中...', '');
+    showHint('Rolling...', '');
     document.getElementById('resultBar').textContent = '...';
     document.getElementById('resultBar').className = 'result-bar';
 
@@ -1050,7 +1052,7 @@ function finishRoll(results) {
         if (win > 0) {
             totalWin += win;
             const mult = mc === 1 ? 2 : mc === 2 ? 3 : 16;
-            winMessages.push(COLORS[ci].label + '中' + mc + '个 x' + mult);
+            winMessages.push(COLORS[ci].label + ' hit ' + mc + ' x' + mult);
         }
     }
 
@@ -1063,7 +1065,7 @@ function finishRoll(results) {
     if (maxMatch >= 2) document.getElementById('check2').classList.add('checked');
     if (maxMatch >= 3) document.getElementById('check3').classList.add('checked');
 
-    const resultColors = results.map(r => COLORS[r].label).join('、');
+    const resultColors = results.map(r => COLORS[r].label).join(', ');
 
     if (totalWin > 0) {
         balance += totalWin;
@@ -1071,9 +1073,9 @@ function finishRoll(results) {
         if (isRechargeUser) {
             betConfig.maxBetAmount = balance;
         }
-        resultBar.textContent = '🎉 ' + winMessages.join('，') + ' 共获得 ' + totalWin;
+        resultBar.textContent = '🎉 ' + winMessages.join(', ') + ' Won ' + totalWin;
         resultBar.className = 'result-bar win';
-        showHint('恭喜！赢得 ' + totalWin + ' 金币！', 'win');
+        showHint('Congratulations! Won ' + totalWin + '!', 'win');
         spawnCoins();
         
         // 收集中奖且有下注的颜色索引，触发格子闪烁效果
@@ -1088,9 +1090,9 @@ function finishRoll(results) {
         }
         triggerWinFlash(winningColors);
     } else {
-        resultBar.textContent = '结果：' + resultColors + '，未命中';
+        resultBar.textContent = 'Result: ' + resultColors + ', No match';
         resultBar.className = 'result-bar lose';
-        showHint('很遗憾，再试一次吧', 'lose');
+        showHint('Sorry, try again!', 'lose');
     }
 
     // 重置下注数据（游戏结束）

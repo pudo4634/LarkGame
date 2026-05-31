@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -296,23 +296,24 @@
             border: 1px solid #555;
         }
 
-        /* 清除按钮（在颜色面板右下角） */
+        /* 清除按钮（行内） */
         .clear-btn {
-            position: absolute;
-            bottom: -40px; right: 0;
-            width: 38px; height: 38px;
-            background: #555;
-            border: 1px solid #666;
-            border-radius: 8px;
+            background: #855;
+            border: 1px solid #a66;
+            border-radius: 6px;
+            color: #f99;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 8px 12px;
             cursor: pointer;
+            transition: all 0.15s;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
-            z-index: 10;
+            gap: 4px;
         }
-        .clear-btn:hover { background: #666; }
-        .clear-btn svg { width: 18px; height: 18px; fill: #ccc; }
+        .clear-btn:hover { background: #a66; color: #fff; }
+        .clear-btn svg { width: 14px; height: 14px; fill: currentColor; }
 
         /* 分区标题 */
         .bet-section-title {
@@ -386,7 +387,7 @@
         }
         .bet-input {
             flex: 0 0 auto;
-            width: 140px;
+            width: 200px;
             display: flex;
             align-items: center;
             background: #3a3a3e;
@@ -657,27 +658,27 @@
 <body>
 
     <!-- 结果栏 -->
-    <div class="result-bar" id="resultBar">游戏结果将会显示</div>
+    <div class="result-bar" id="resultBar">Game results will be shown here</div>
 
     <!-- 主游戏区 -->
     <div class="game-container">
 
         <!-- 派彩面板 -->
         <div class="payout-panel">
-            <div class="payout-title">派彩</div>
+            <div class="payout-title">Payout</div>
             <div class="payout-item">
                 <div class="payout-check" id="check1">&#10003;</div>
-                <div>1个</div>
+                <div>1 Dice</div>
                 <div class="payout-multiplier">x2</div>
             </div>
             <div class="payout-item">
                 <div class="payout-check" id="check2">&#10003;</div>
-                <div>2个</div>
+                <div>2 Dice</div>
                 <div class="payout-multiplier">x3</div>
             </div>
             <div class="payout-item">
                 <div class="payout-check" id="check3">&#10003;</div>
-                <div>3 个</div>
+                <div>3 Dice</div>
                 <div class="payout-multiplier">x16</div>
             </div>
         </div>
@@ -693,7 +694,7 @@
                 <div class="light-bulb"></div>
                 <div class="light-bulb"></div>
             </div>
-            <div class="hint-text" id="hintText">请选择您的颜色</div>
+            <div class="hint-text" id="hintText">Please select your color</div>
             <div class="dice-container" id="diceContainer"></div>
         </div>
     </div>
@@ -738,23 +739,15 @@
                 <div class="bet-amount-label" id="label-5">0.00</div>
             </div>
         </div>
-        <!-- 清除按钮 -->
-        <button class="clear-btn" onclick="clearAllBets()" id="clearBtn" title="清除所有下注">
-            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-        </button>
-    </div>
-</div>
-            </div>
-        </div>
     </div>
 
     <!-- 投注控制区（截图风格） -->
     <div class="bet-control-wrapper">
         <!-- 金额 -->
         <div class="bet-section-title">
-            金额
+            Amount
             <span class="info-icon">i</span>
-            <span class="max-bet-icon" onclick="toggleMaxBetTip(event)">!</span>
+            <span class="max-bet-icon" onclick="toggleMaxBetTip(event)">i</span>
             <div class="max-bet-tooltip" id="maxBetTooltip" style="display: none;">
                 Max Bet: NGN <span id="maxBetValue">0.00</span>
             </div>
@@ -777,6 +770,10 @@
                 </div>
             </div>
             <div class="bet-ops">
+                <button id="clearBtn" onclick="clearAllBets()" class="clear-btn" title="Clear All Bets">
+                    <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                    Clear
+                </button>
                 <button onclick="adjustBetAmount(0.5)" class="op-btn">1/2</button>
                 <button onclick="adjustBetAmount(2)" class="op-btn">2×</button>
             </div>
@@ -814,7 +811,7 @@
         </div>
 
         <!-- 投注数量 -->
-        <div class="bet-section-title">投注数量</div>
+        <div class="bet-section-title">Bet Quantity</div>
         <div class="bet-quantity-row">
             <button onclick="setBetQuantity('inf')" class="qty-btn active" data-qty="inf">∞</button>
             <button onclick="setBetQuantity(10)" class="qty-btn" data-qty="10">10</button>
@@ -822,13 +819,13 @@
         </div>
 
         <!-- 开始按钮 -->
-        <button class="start-btn" id="rollBtn" onclick="rollDice()">开始摇骰</button>
+        <button class="start-btn" id="rollBtn" onclick="rollDice()">Roll Dice</button>
     </div>
 
     <!-- 底部信息 -->
     <div class="bottom-bar">
         <div class="amount-section">
-            <span class="amount-label">金额</span>
+            <span class="amount-label">Total Bet</span>
             <span class="amount-value" id="totalBet">0</span>
         </div>
         <div class="balance-display" id="balanceDisplay">1000.00</div>
