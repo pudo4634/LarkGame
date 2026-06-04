@@ -1007,6 +1007,11 @@ function updateUI() {
     const hasBet = bets.some(b => b > 0);
     document.getElementById('rollBtn').disabled = !hasBet || isRolling;
     
+    // 启用/禁用颜色按钮（只有在滚动时禁用）
+    document.querySelectorAll('.color-btn').forEach(b => {
+        b.disabled = isRolling;
+    });
+    
     // 1.2 下注金额限制：未付费玩家禁用快捷按钮
     if (!isRechargeUser) {
         // 禁用 1/2、2x、Min、Max 按钮（Clear 按钮除外）
@@ -1209,13 +1214,23 @@ function spawnCoins() {
 // 测试时可修改 isRecharge 来切换付费/未付费状态
 const urlParams = new URLSearchParams(window.location.search);
 const accessToken = urlParams.get("token");
-if(accessToken === undefined){
+console.log('[Game Init] accessToken:', accessToken);
+
+if(accessToken === undefined || accessToken === null){
+    console.log('[Game Init] No token, initializing with default data...');
     initPlayerData({
         initialAmount: 1000,
         isRecharge: true  // false=未付费，true=已付费
     });
+} else {
+    // 如果有 token 但未从服务器获取数据，也初始化一个默认余额用于测试
+    console.log('[Game Init] Token exists, initializing with default data for testing...');
+    initPlayerData({
+        initialAmount: 1000,
+        isRecharge: true
+    });
 }
-
+console.log('[Game Init] Initialized - balance:', balance, 'isRechargeUser:', isRechargeUser, 'betConfig:', getBetConfig(), '_betAmount:', _betAmount);
 
 // 测试用：可通过控制台调用 setRechargeStatus(true/false) 切换状态
 // 例如：setRechargeStatus(false) 切换为未付费玩家
