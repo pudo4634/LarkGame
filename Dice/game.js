@@ -21,6 +21,7 @@ let betAmounts = [0, 0, 0, 0, 0, 0];  // 每种颜色的实际下注总金额
 let _lockedBetAmount = null;  // 本局锁定的下注金额（一旦下注后锁定）
 let isRolling = false;
 let _cleanupTimer = null; // finishRoll 的延迟清理定时器，防止与下次 rollDice 冲突
+let gameHistory = [];    // 历史记录数组，最多保存 5 条
 
 // ============================================================
 //  玩家状态与配置
@@ -823,42 +824,29 @@ function setupSliderCloseHandler() {
 // 初始化时设置关闭处理器
 setupSliderCloseHandler();
 
-/** 调整投注金额（1/2、2×、Min、Max） */
+/** 调整投注金额（1/2、2×） */
 function adjustBetAmount(factor) {
     const config = getBetConfig();
     
     // 未付费玩家禁用所有调整按钮
     if (!isRechargeUser) {
-        if (factor === 0.5 || factor === 'min') {
+        if (factor === 0.5) {
             showToast(`The minimum bet amount for un recharge user is ${config.minBetAmount}`);
-        } else if (factor === 2 || factor === 'max') {
+        } else if (factor === 2) {
             showToast(`The maximum bet amount for un recharge user is ${config.maxBetAmount}`);
-        } else {
-            showToast(`Min: ${config.minBetAmount}, Max: ${config.maxBetAmount}`);
         }
         return;
     }
     
     let newVal;
-    if (factor === 'min') {
-        // Min：切换到最小下注金额
-        newVal = config.minBetAmount;
-    } else if (factor === 'max') {
-        // Max：切换到当前玩家资产最大值（向下取整到十位）
-        newVal = Math.floor(balance / 10) * 10;
-        // 确保不超过配置的最大值
-        newVal = Math.min(newVal, config.maxBetAmount);
-        // 确保不低于最小值
-        newVal = Math.max(newVal, config.minBetAmount);
-    } else if (factor === 0.5) {
+    if (factor === 0.5) {
         // 1/2：减半
         newVal = Math.max(config.minBetAmount, Math.round(_betAmount / 2));
     } else if (factor === 2) {
         // 2x：翻倍
         newVal = Math.min(config.maxBetAmount, _betAmount * 2);
     } else {
-        // 上下箭头：+1 或 -1（这个逻辑不会被用到，因为箭头现在是 toggleSlider）
-        newVal = Math.max(config.minBetAmount, _betAmount + factor);
+        return;
     }
     
     // 检查是否超过最大限制
@@ -1014,7 +1002,7 @@ function updateUI() {
     
     // 1.2 下注金额限制：未付费玩家禁用快捷按钮
     if (!isRechargeUser) {
-        // 禁用 1/2、2x、Min、Max 按钮（Clear 按钮除外）
+        // 禁用 1/2、2x 按钮，但保留 Clear 按钮可用
         document.querySelectorAll('.op-btn').forEach(btn => {
             if (btn.id !== 'clearBtn') {
                 btn.disabled = true;
@@ -1031,9 +1019,7 @@ function updateUI() {
     } else {
         // 已付费玩家启用按钮
         document.querySelectorAll('.op-btn').forEach(btn => {
-            if (btn.id !== 'clearBtn') {
-                btn.disabled = false;
-            }
+            btn.disabled = false;
         });
         document.querySelectorAll('.arrow-btn').forEach(btn => {
             btn.disabled = false;
@@ -1047,6 +1033,71 @@ function showHint(text, type) {
     const hint = document.getElementById('hintText');
     hint.textContent = text;
     hint.className = 'hint-text' + (type ? ' ' + type : '');
+}
+
+/**
+ * 添加历史记录
+ * @param {number[]} results - 骰子结果数组 [0-5, 0-5, 0-5]
+ * @param {number} totalWin - 总赢利金额
+ */
+function addHistoryRecord(results, totalWin) {
+    // 计算本局最高倍率
+    let maxMultiplier = 0;
+    let hasWin = totalWin > 0;
+    
+    // 检查所有下注的颜色，找出最高倍率
+    for (let ci = 0; ci < 6; ci++) {
+        if (betAmounts[ci] === 0) continue;
+        const mc = results.filter(r => r === ci).length;
+        if (mc === 3) {
+            maxMultiplier = 16;
+        } else if (mc === 2 && maxMultiplier < 3) {
+            maxMultiplier = 3;
+        } else if (mc === 1 && maxMultiplier < 2) {
+            maxMultiplier = 2;
+        }
+    }
+    
+    // 如果没有下注或没有中奖，倍率为 0
+    if (!hasWin) {
+        maxMultiplier = 0;
+    }
+    
+    // 添加到历史记录
+    gameHistory.push({
+        multiplier: maxMultiplier,
+        isWin: hasWin
+    });
+    
+    // 只保留最近 5 条
+    if (gameHistory.length > 5) {
+        gameHistory.shift();
+    }
+    
+    // 更新 UI
+    updateHistoryUI();
+}
+
+/**
+ * 更新历史记录 UI
+ */
+function updateHistoryUI() {
+    const historyBar = document.getElementById('historyBar');
+    if (!historyBar) return;
+    
+    historyBar.innerHTML = '';
+    
+    gameHistory.forEach(record => {
+        const item = document.createElement('div');
+        item.className = `history-item ${record.isWin ? 'win' : 'lose'}`;
+        
+        const multiplierText = document.createElement('span');
+        multiplierText.className = 'multiplier';
+        multiplierText.textContent = 'x' + record.multiplier;
+        
+        item.appendChild(multiplierText);
+        historyBar.appendChild(item);
+    });
 }
 
 // -------------- 摇骰子 --------------
@@ -1063,8 +1114,6 @@ function rollDice() {
     document.querySelectorAll('.payout-check').forEach(c => c.classList.remove('checked'));
 
     showHint('Rolling...', '');
-    document.getElementById('resultBar').textContent = '...';
-    document.getElementById('resultBar').className = 'result-bar';
 
     // 取消上次的延迟清理定时器（防止误清除新骰子）
     if (_cleanupTimer) {
@@ -1117,7 +1166,6 @@ function finishRoll(results) {
     document.getElementById('clearBtn').disabled = false;
     document.querySelectorAll('.color-btn').forEach(b => b.disabled = false);
     
-    const resultBar = document.getElementById('resultBar');
     let totalWin = 0;
     let winMessages = [];
 
@@ -1145,16 +1193,12 @@ function finishRoll(results) {
     if (maxMatch >= 2) document.getElementById('check2').classList.add('checked');
     if (maxMatch >= 3) document.getElementById('check3').classList.add('checked');
 
-    const resultColors = results.map(r => COLORS[r].label).join(', ');
-
     if (totalWin > 0) {
         balance += totalWin;
         // 已付费玩家需要更新最大下注金额
         if (isRechargeUser) {
             betConfig.maxBetAmount = balance;
         }
-        resultBar.textContent = '🎉 ' + winMessages.join(', ') + ' Won ' + totalWin;
-        resultBar.className = 'result-bar win';
         showHint('Congratulations! Won ' + totalWin + '!', 'win');
         spawnCoins();
         
@@ -1170,8 +1214,6 @@ function finishRoll(results) {
         }
         triggerWinFlash(winningColors);
     } else {
-        resultBar.textContent = 'Result: ' + resultColors + ', No match';
-        resultBar.className = 'result-bar lose';
         showHint('Sorry, try again!', 'lose');
     }
 
@@ -1179,6 +1221,9 @@ function finishRoll(results) {
     bets = [0, 0, 0, 0, 0, 0];
     betAmounts = [0, 0, 0, 0, 0, 0];
     _lockedBetAmount = null;  // 重置本局锁定的下注金额
+    
+    // 添加历史记录
+    addHistoryRecord(results, totalWin);
     
     updateUI();
     // 结算后用户需要重新下注，updateUI() 会根据 bets 状态正确控制按钮

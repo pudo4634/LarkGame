@@ -40,6 +40,50 @@
         .result-bar.win { color: #ffd700; font-weight: bold; font-size: 15px; }
         .result-bar.lose { color: #ff8888; }
 
+        /* ========= 历史记录栏（顶部横向） ========= */
+        .history-bar {
+            width: 92%;
+            max-width: 520px;
+            background: #3a3a3e;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-top: 12px;
+            border: 1px solid #444;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-start;
+            overflow-x: auto;
+            min-height: 50px;
+        }
+        .history-item {
+            flex: 0 0 auto;
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+        }
+        .history-item.win {
+            background: linear-gradient(135deg, #2a8a2a 0%, #1a5a1a 100%);
+            border-color: #4c7;
+            box-shadow: 0 0 8px rgba(76, 200, 119, 0.4);
+        }
+        .history-item.lose {
+            background: linear-gradient(135deg, #5a5a5a 0%, #3a3a3a 100%);
+            border-color: #666;
+            color: #aaa;
+        }
+        .history-item .multiplier {
+            z-index: 1;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
         /* ========= 主游戏区 ========= */
         .game-container {
             position: relative;
@@ -686,8 +730,10 @@
 </head>
 <body>
 
-    <!-- 结果栏 -->
-    <div class="result-bar" id="resultBar">Game results will be shown here</div>
+    <!-- 历史记录栏（顶部横向） -->
+    <div class="history-bar" id="historyBar">
+        <!-- 历史记录项将动态插入 -->
+    </div>
 
     <!-- 主游戏区 -->
     <div class="game-container">
@@ -798,10 +844,8 @@
                 </div>
             </div>
             <div class="bet-ops">
-                <button onclick="adjustBetAmount('min')" class="op-btn">Min</button>
                 <button onclick="adjustBetAmount(0.5)" class="op-btn">1/2</button>
                 <button onclick="adjustBetAmount(2)" class="op-btn">2×</button>
-                <button onclick="adjustBetAmount('max')" class="op-btn">Max</button>
                 <button onclick="clearAllBets()" class="op-btn" id="clearBtn" title="清除所有下注">Clear</button>
             </div>
         </div>
