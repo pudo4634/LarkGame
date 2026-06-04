@@ -620,7 +620,7 @@
 
         /* 投注数量 */
         .bet-quantity-row {
-            display: flex;
+            display: none;
             gap: 8px;
             margin-bottom: 16px;
         }
@@ -882,7 +882,7 @@
         </div>
 
         <!-- 投注数量 -->
-        <div class="bet-section-title">Bet Quantity</div>
+        <div class="bet-section-title" style="display: none;">Bet Quantity</div>
         <div class="bet-quantity-row">
             <button onclick="setBetQuantity('inf')" class="qty-btn active" data-qty="inf">∞</button>
             <button onclick="setBetQuantity(10)" class="qty-btn" data-qty="10">10</button>
