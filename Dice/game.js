@@ -23,6 +23,30 @@ let isRolling = false;
 let _cleanupTimer = null; // finishRoll 的延迟清理定时器，防止与下次 rollDice 冲突
 let gameHistory = [];    // 历史记录数组，最多保存 5 条
 
+// 音效
+let audioWin = null;
+let audioLose = null;
+let audioRoll = null;
+let audioQuick = null;
+
+/** 初始化音效 */
+function initAudio() {
+    audioWin = document.getElementById('audio-win');
+    audioLose = document.getElementById('audio-lose');
+    audioRoll = document.getElementById('audio-roll');
+    audioQuick = document.getElementById('audio-quick');
+}
+
+/** 播放音效 */
+function playSound(audioElement) {
+    if (audioElement) {
+        audioElement.currentTime = 0;
+        audioElement.play().catch(e => {
+            console.log('[Audio] Play failed:', e);
+        });
+    }
+}
+
 // ============================================================
 //  玩家状态与配置
 // ============================================================
@@ -1107,6 +1131,9 @@ function rollDice() {
     const total = bets.reduce((a, b) => a + b, 0) * _betAmount;
     if (total === 0) return;
 
+    // 播放点击音效
+    playSound(audioQuick);
+
     isRolling = true;
     document.getElementById('rollBtn').disabled = true;
     document.getElementById('clearBtn').disabled = true;
@@ -1114,6 +1141,9 @@ function rollDice() {
     document.querySelectorAll('.payout-check').forEach(c => c.classList.remove('checked'));
 
     showHint('Rolling...', '');
+
+    // 播放骰子滚动音效
+    playSound(audioRoll);
 
     // 取消上次的延迟清理定时器（防止误清除新骰子）
     if (_cleanupTimer) {
@@ -1202,6 +1232,9 @@ function finishRoll(results) {
         showHint('Congratulations! Won ' + totalWin + '!', 'win');
         spawnCoins();
         
+        // 播放中奖音效
+        playSound(audioWin);
+        
         // 收集中奖且有下注的颜色索引，触发格子闪烁效果
         const winningColors = [];
         for (let ci = 0; ci < 6; ci++) {
@@ -1215,6 +1248,8 @@ function finishRoll(results) {
         triggerWinFlash(winningColors);
     } else {
         showHint('Sorry, try again!', 'lose');
+        // 播放失败音效
+        playSound(audioLose);
     }
 
     // 重置下注数据（游戏结束）
@@ -1276,6 +1311,9 @@ if(accessToken === undefined || accessToken === null){
     });
 }
 console.log('[Game Init] Initialized - balance:', balance, 'isRechargeUser:', isRechargeUser, 'betConfig:', getBetConfig(), '_betAmount:', _betAmount);
+
+// 初始化音效
+initAudio();
 
 // 测试用：可通过控制台调用 setRechargeStatus(true/false) 切换状态
 // 例如：setRechargeStatus(false) 切换为未付费玩家
