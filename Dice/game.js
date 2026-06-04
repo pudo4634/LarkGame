@@ -518,7 +518,7 @@ function setBetAmount(val) {
     if (val < config.minBetAmount) {
         val = config.minBetAmount;
         if (!isRechargeUser) {
-            showToast(`Min bet: ${config.minBetAmount}`);
+            showToast(`The minimum bet amount for un recharge user is ${config.minBetAmount}`);
         }
     }
     
@@ -526,7 +526,7 @@ function setBetAmount(val) {
     if (val > config.maxBetAmount) {
         val = config.maxBetAmount;
         if (!isRechargeUser) {
-            showToast(`Max bet: ${config.maxBetAmount}`);
+            showToast(`The maximum bet amount for un recharge user is ${config.maxBetAmount}`);
         }
     }
     
@@ -602,6 +602,26 @@ function onBetAmountInput(input) {
 function onBetAmountBlur(input) {
     const config = getBetConfig();
     let value = parseInt(input.value) || 0;
+    
+    // 未付费玩家输入低于最小值
+    if (!isRechargeUser && value < config.minBetAmount) {
+        value = config.minBetAmount;
+        showToast(`The minimum bet amount for un recharge user is ${config.minBetAmount}`);
+        setBetAmount(value);
+        updateSliderPosition();
+        closeMaxBetTip();
+        return;
+    }
+    
+    // 未付费玩家输入高于最大值
+    if (!isRechargeUser && value > config.maxBetAmount) {
+        value = config.maxBetAmount;
+        showToast(`The maximum bet amount for un recharge user is ${config.maxBetAmount}`);
+        setBetAmount(value);
+        updateSliderPosition();
+        closeMaxBetTip();
+        return;
+    }
     
     // 验证最小值
     if (value < config.minBetAmount) {
@@ -696,7 +716,7 @@ function toggleSlider() {
 
     // 未付费玩家不能拖动
     if (!isRechargeUser) {
-        showToast(`Min bet: ${config.minBetAmount}`);
+        showToast(`The minimum bet amount for un recharge user is ${config.minBetAmount}`);
         return;
     }
 
@@ -792,18 +812,34 @@ function setupSliderCloseHandler() {
 // 初始化时设置关闭处理器
 setupSliderCloseHandler();
 
-/** 调整投注金额（1/2、2×、+1、-1） */
+/** 调整投注金额（1/2、2×、Min、Max） */
 function adjustBetAmount(factor) {
     const config = getBetConfig();
     
     // 未付费玩家禁用所有调整按钮
     if (!isRechargeUser) {
-        showToast(`Min: ${config.minBetAmount}, Max: ${config.maxBetAmount}`);
+        if (factor === 0.5 || factor === 'min') {
+            showToast(`The minimum bet amount for un recharge user is ${config.minBetAmount}`);
+        } else if (factor === 2 || factor === 'max') {
+            showToast(`The maximum bet amount for un recharge user is ${config.maxBetAmount}`);
+        } else {
+            showToast(`Min: ${config.minBetAmount}, Max: ${config.maxBetAmount}`);
+        }
         return;
     }
     
     let newVal;
-    if (factor === 0.5) {
+    if (factor === 'min') {
+        // Min：切换到最小下注金额
+        newVal = config.minBetAmount;
+    } else if (factor === 'max') {
+        // Max：切换到当前玩家资产最大值（向下取整到十位）
+        newVal = Math.floor(balance / 10) * 10;
+        // 确保不超过配置的最大值
+        newVal = Math.min(newVal, config.maxBetAmount);
+        // 确保不低于最小值
+        newVal = Math.max(newVal, config.minBetAmount);
+    } else if (factor === 0.5) {
         // 1/2：减半
         newVal = Math.max(config.minBetAmount, Math.round(_betAmount / 2));
     } else if (factor === 2) {
@@ -866,7 +902,7 @@ function addBet(btn) {
         const betColorsCount = bets.filter(b => b > 0).length;
         // 如果这个颜色还没下注，且已达到最大次数限制
         if (bets[idx] === 0 && betColorsCount >= config.maxBetTimes) {
-            showToast(`Max ${config.maxBetTimes} colors per round.`);
+            showToast(`Your maximum times of bets is ${config.maxBetTimes}`);
             return;
         }
     }
@@ -962,9 +998,11 @@ function updateUI() {
     
     // 1.2 下注金额限制：未付费玩家禁用快捷按钮
     if (!isRechargeUser) {
-        // 禁用 1/2、2x、Min、Max 按钮
+        // 禁用 1/2、2x、Min、Max 按钮（Clear 按钮除外）
         document.querySelectorAll('.op-btn').forEach(btn => {
-            btn.disabled = true;
+            if (btn.id !== 'clearBtn') {
+                btn.disabled = true;
+            }
         });
         // 禁用上下箭头按钮
         document.querySelectorAll('.arrow-btn').forEach(btn => {
@@ -977,7 +1015,9 @@ function updateUI() {
     } else {
         // 已付费玩家启用按钮
         document.querySelectorAll('.op-btn').forEach(btn => {
-            btn.disabled = false;
+            if (btn.id !== 'clearBtn') {
+                btn.disabled = false;
+            }
         });
         document.querySelectorAll('.arrow-btn').forEach(btn => {
             btn.disabled = false;

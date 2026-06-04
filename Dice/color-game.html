@@ -447,6 +447,11 @@
             padding: 0;
         }
         .arrow-btn:hover { background: #666; }
+        .arrow-btn:disabled {
+            background: #3a3a3e;
+            color: #666;
+            cursor: not-allowed;
+        }
 
         .bet-ops {
             display: flex;
@@ -465,6 +470,12 @@
             transition: all 0.15s;
         }
         .op-btn:hover { background: #666; color: #fff; }
+        .op-btn:disabled {
+            background: #3a3a3e;
+            border-color: #444;
+            color: #666;
+            cursor: not-allowed;
+        }
         #clearBtn {
             background: #8b3a3a;
             border: 1px solid #a54444;
@@ -787,8 +798,10 @@
                 </div>
             </div>
             <div class="bet-ops">
+                <button onclick="adjustBetAmount('min')" class="op-btn">Min</button>
                 <button onclick="adjustBetAmount(0.5)" class="op-btn">1/2</button>
                 <button onclick="adjustBetAmount(2)" class="op-btn">2×</button>
+                <button onclick="adjustBetAmount('max')" class="op-btn">Max</button>
                 <button onclick="clearAllBets()" class="op-btn" id="clearBtn" title="清除所有下注">Clear</button>
             </div>
         </div>
@@ -833,7 +846,7 @@
         </div>
 
         <!-- 开始按钮 -->
-        <button class="start-btn" id="rollBtn" onclick="rollDice()">Roll Dice</button>
+        <button class="start-btn" id="rollBtn" onclick="rollDice()">Bet</button>
     </div>
 
     <!-- 底部信息 -->
