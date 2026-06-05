@@ -199,8 +199,8 @@ const DICE_FACES = [
 const FACE_TARGET_ANGLES = [
     { rx:   0, ry:   0 }, // 0=front  → 不旋转，已经朝摄像机
     { rx:   0, ry: 180 }, // 1=back   → Y 轴旋转 180°，让背面朝摄像机
-    { rx:   0, ry:  90 }, // 2=right  → Y 轴旋转 90°，让右面朝摄像机（CSS 初始是 +90°朝右，需要 -90°才能朝前，但旋转方向相反所以是 +90°）
-    { rx:   0, ry: -90 }, // 3=left   → Y 轴旋转 -90°，让左面朝摄像机
+    { rx:   0, ry: -90 }, // 2=right  → Y 轴旋转 -90°，让右面朝摄像机（CSS 初始是 +90°朝右，需要 -90°才能朝前）
+    { rx:   0, ry:  90 }, // 3=left   → Y 轴旋转 +90°，让左面朝摄像机（CSS 初始是 -90°朝左，需要 +90°才能朝前）
     { rx: -90, ry:   0 }, // 4=top    → X 轴旋转 -90°，让顶面朝摄像机（CSS 初始是 +90°朝上，需要 -90°才能朝前）
     { rx:  90, ry:   0 }, // 5=bottom → X 轴旋转 90°，让底面朝摄像机
 ];
@@ -387,6 +387,9 @@ class Dice3D {
         this.targetRx = angles.rx + 360 * (3 + Math.floor(Math.random() * 3));
         this.targetRy = angles.ry + 360 * (2 + Math.floor(Math.random() * 3));
         this._resultColorIdx = colorIdx;
+        
+        // 调试日志
+        console.log(`骰子 ${this.diceIdx}: 目标颜色索引=${colorIdx} (${COLORS[colorIdx].label}), 面索引=${faceIdx}, 旋转角度=(${this.targetRx}, ${this.targetRy})`);
     }
 
     /** 更新 DOM transform（ immediate，无 transition） */
@@ -512,6 +515,9 @@ function startRollAnimation(results) {
                 d.rx = d.targetRx % 360;
                 d.ry = d.targetRy % 360;
                 d._render();
+                
+                // 调试：打印最终角度
+                console.log(`骰子 ${d.diceIdx} 停止：最终角度=(${d.rx}, ${d.ry}), 目标颜色=${d._resultColorIdx} (${COLORS[d._resultColorIdx].label})`);
             }
         }
 
@@ -1159,30 +1165,44 @@ function rollDice() {
     document.getElementById('diceContainer').innerHTML = '';
 
     // ========== 调用 main.jsx 中的 startBet 获取服务器结果 ==========
-    // startBet 接收前三种颜色的下注次数：黄色(0), 白色(1), 粉色(2)
+    // startBet 接收 6 种颜色的下注次数
     if (typeof window.startBet === 'function') {
-        window.startBet(bets[0], bets[1], bets[2],bets[3], bets[4], bets[5], function(err, data) {
+        window.startBet(bets[0], bets[1], bets[2], bets[3], bets[4], bets[5], function(err, data) {
             if (err) {
                 console.error('startBet error:', err);
                 // 出错时使用本地随机结果作为备用
-                //const results = rollDiceRandom();
-                //startRollAnimation(results);
+                const results = rollDiceRandom();
+                console.log('=== 本地随机模式（备用）===');
+                console.log('骰子结果:', results, results.map(i => COLORS[i].label));
+                startRollAnimation(results);
                 return;
             }
             
             // 从服务器返回的数据中提取骰子结果
             // data.diceResult 格式应该是类似 [0, 1, 2] 的数组，代表三个骰子的颜色索引
-            let result = [];
-            for(let i = 0; i < data.details; ++ i){
-                let dice = data.details[i];
-                result.push(dice.colorIndex);
+            let result = data.diceResult || [];
+            console.log('=== 服务器返回数据 ===');
+            console.log('骰子结果 (diceResult):', result);
+            console.log('骰子结果 (颜色名称):', result.map(i => COLORS[i] ? COLORS[i].label : '未知'));
+            console.log('下注详情 (details):', data.details);
+            
+            // 验证：检查 details 数组，打印每个下注颜色的命中情况
+            if (data.details && Array.isArray(data.details)) {
+                console.log('--- 下注详情分析 ---');
+                for (let i = 0; i < data.details.length; i++) {
+                    const detail = data.details[i];
+                    console.log(`  颜色索引 ${detail.colorIndex} (${COLORS[detail.colorIndex] ? COLORS[detail.colorIndex].label : '未知'}): 下注次数=${detail.count}, 命中数量=${detail.hitCount}`);
+                }
             }
-            console.log(result);
+            
             startRollAnimation(result);
         });
     } else {
         // 如果 startBet 不可用，使用本地随机结果
+        console.log('=== 本地随机模式（无服务器）===');
         const results = rollDiceRandom();
+        console.log('骰子结果:', results, results.map(i => COLORS[i].label));
+        console.log('下注情况:', betAmounts);
         startRollAnimation(results);
     }
     // ================================================
@@ -1196,6 +1216,11 @@ function finishRoll(results) {
     document.getElementById('clearBtn').disabled = false;
     document.querySelectorAll('.color-btn').forEach(b => b.disabled = false);
     
+    console.log('=== 结算开始 ===');
+    console.log('骰子结果:', results, '→', results.map(i => COLORS[i].label));
+    console.log('下注金额:', betAmounts);
+    console.log('下注次数:', bets);
+    
     let totalWin = 0;
     let winMessages = [];
 
@@ -1203,6 +1228,7 @@ function finishRoll(results) {
         if (betAmounts[ci] === 0) continue;
         const mc  = results.filter(r => r === ci).length;
         const bet = betAmounts[ci];  // 使用实际下注金额
+        console.log(`颜色 ${ci} (${COLORS[ci].label}): 下注=${bet}, 命中数量=${mc}`);
         let win = 0;
         if (mc === 1)      win = bet * 2;
         else if (mc === 2) win = bet * 3;
@@ -1211,8 +1237,15 @@ function finishRoll(results) {
             totalWin += win;
             const mult = mc === 1 ? 2 : mc === 2 ? 3 : 16;
             winMessages.push(COLORS[ci].label + ' hit ' + mc + ' x' + mult);
+            console.log(`  → 中奖！赢得 ${win}`);
+        } else {
+            console.log(`  → 未中奖`);
         }
     }
+    
+    console.log('=== 结算结束 ===');
+    console.log('总下注:', betAmounts.reduce((a, b) => a + b, 0));
+    console.log('总赢得:', totalWin);
 
     let maxMatch = 0;
     for (let ci = 0; ci < 6; ci++) {
