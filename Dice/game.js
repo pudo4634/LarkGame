@@ -23,6 +23,13 @@ let isRolling = false;
 let _cleanupTimer = null; // finishRoll 的延迟清理定时器，防止与下次 rollDice 冲突
 let gameHistory = [];    // 历史记录数组，最多保存 5 条
 
+// Auto 功能相关变量
+let autoEnabled = false;        // Auto 是否启用
+let autoConfig = null;          // Auto 配置 {betAmount, selectedColors}
+let autoRoundCount = 0;         // Auto 已执行局数
+let autoStartBalance = 0;       // Auto 启动时的余额
+let autoTimer = null;           // Auto 定时器
+
 // 音效
 let audioWin = null;
 let audioLose = null;
@@ -150,6 +157,11 @@ function initPlayerData(options = {}) {
     bets = [0, 0, 0, 0, 0, 0];
     betAmounts = [0, 0, 0, 0, 0, 0];
     
+    // 重置 Auto 状态
+    if (autoEnabled) {
+        stopAuto();
+    }
+    
     updateBetAmountDisplay();
     updateUI();
 }
@@ -177,6 +189,10 @@ function setRechargeStatus(isRecharge) {
         };
     } else {
         betConfig = { ...UNRECHARGED_CONFIG };
+        // 未付费玩家禁用 Auto
+        if (autoEnabled) {
+            stopAuto('Auto feature is only available for paid users');
+        }
     }
     updateUI();
     console.log(`Recharge status: ${isRecharge ? 'Paid' : 'Free'}`);
@@ -1130,6 +1146,225 @@ function updateHistoryUI() {
     });
 }
 
+// ============================================================
+//  Auto 功能
+// ============================================================
+
+/**
+ * 切换 Auto 状态
+ */
+function toggleAuto() {
+    if (autoEnabled) {
+        stopAuto();
+    } else {
+        startAuto();
+    }
+}
+
+/**
+ * 启动 Auto 功能
+ */
+function startAuto() {
+    // 1. 检查付费状态（未付费玩家禁用）
+    if (!isRechargeUser) {
+        showHint('Auto feature is only available for paid users', 'lose');
+        return;
+    }
+    
+    // 2. 检查当前下注配置是否有效
+    const totalBet = bets.reduce((a, b) => a + b, 0) * _betAmount;
+    if (totalBet === 0) {
+        showHint('Please select at least one color and set bet amount', 'lose');
+        return;
+    }
+    
+    // 3. 检查余额是否足够
+    if (balance < totalBet) {
+        showHint('Balance is not enough', 'lose');
+        return;
+    }
+    
+    // 4. 保存当前下注配置
+    autoConfig = {
+        betAmount: _betAmount,
+        bets: [...bets],
+        betAmounts: [...betAmounts]
+    };
+    
+    // 5. 设置 Auto 状态
+    autoEnabled = true;
+    autoRoundCount = 0;
+    autoStartBalance = balance;
+    
+    // 6. 更新 UI（锁定输入、高亮 Auto 按钮）
+    updateAutoUI();
+    
+    showHint('Auto started', 'win');
+    
+    // 7. 执行第一局
+    executeAutoRound();
+}
+
+/**
+ * 停止 Auto 功能
+ * @param {string} reason - 停止原因（可选）
+ */
+function stopAuto(reason) {
+    autoEnabled = false;
+    
+    // 清除定时器
+    if (autoTimer) {
+        clearTimeout(autoTimer);
+        autoTimer = null;
+    }
+    
+    // 恢复 UI 状态
+    updateAutoUI();
+    
+    // 显示停止原因（如果有）
+    if (reason) {
+        showHint(reason, 'lose');
+    } else {
+        showHint('Auto stopped', '');
+    }
+    
+    // 重置 Auto 配置
+    autoConfig = null;
+}
+
+/**
+ * 执行单局 Auto
+ */
+function executeAutoRound() {
+    if (!autoEnabled) return;
+    
+    // 1. 检查余额
+    const totalBet = autoConfig.bets.reduce((a, b) => a + b, 0) * autoConfig.betAmount;
+    if (balance < totalBet) {
+        stopAuto('Balance is not enough');
+        return;
+    }
+    
+    // 2. 恢复下注配置
+    _betAmount = autoConfig.betAmount;
+    bets = [...autoConfig.bets];
+    betAmounts = [...autoConfig.betAmounts];
+    updateBetAmountDisplay();
+    updateUI();
+    
+    // 3. 自动摇骰子
+    rollDice();
+    
+    // 4. 等待结算完成后，延迟执行下一局
+    // 使用 finishRoll 的回调来检测结算完成
+    waitForAutoSettlement();
+}
+
+/**
+ * 等待 Auto 结算完成并执行下一局
+ */
+function waitForAutoSettlement() {
+    // 等待骰子滚动动画完成
+    const checkInterval = setInterval(() => {
+        if (!isRolling && autoEnabled) {
+            clearInterval(checkInterval);
+            
+            // 延迟 3 秒后执行下一局
+            autoTimer = setTimeout(() => {
+                if (autoEnabled) {
+                    executeAutoRound();
+                }
+            }, 3000);
+        }
+    }, 100);
+}
+
+/**
+ * 更新 Auto UI 状态
+ */
+function updateAutoUI() {
+    const autoBtn = document.getElementById('autoBtn');
+    const autoText = document.getElementById('autoText');
+    const autoInfo = document.getElementById('autoInfo');
+    
+    if (!autoBtn) return;
+    
+    if (autoEnabled) {
+        // Auto 运行中
+        autoBtn.classList.add('running');
+        autoBtn.disabled = false; // Auto 按钮保持可用，允许手动停止
+        autoText.textContent = 'Stop';
+        autoInfo.style.display = 'flex';
+        
+        // 锁定下注控制区
+        lockBetControls(true);
+    } else {
+        // Auto 未运行
+        autoBtn.classList.remove('running');
+        autoBtn.disabled = false;
+        autoText.textContent = 'Auto';
+        autoInfo.style.display = 'none';
+        
+        // 解锁下注控制区
+        lockBetControls(false);
+    }
+}
+
+/**
+ * 更新 Auto 统计数据
+ */
+function updateAutoStats() {
+    const roundCountEl = document.getElementById('autoRoundCount');
+    const profitEl = document.getElementById('autoProfit');
+    
+    if (roundCountEl) {
+        roundCountEl.textContent = autoRoundCount;
+    }
+    
+    if (profitEl) {
+        const profit = balance - autoStartBalance;
+        profitEl.textContent = profit.toFixed(2);
+        
+        // 根据盈亏设置颜色
+        profitEl.classList.remove('positive', 'negative');
+        if (profit > 0) {
+            profitEl.classList.add('positive');
+        } else if (profit < 0) {
+            profitEl.classList.add('negative');
+        }
+    }
+}
+
+/**
+ * 锁定/解锁下注控制区
+ * @param {boolean} lock - 是否锁定
+ */
+function lockBetControls(lock) {
+    const betInput = document.getElementById('betAmountInput');
+    const sliderContainer = document.getElementById('betSlider');
+    const opBtns = document.querySelectorAll('.op-btn');
+    const arrowBtns = document.querySelectorAll('.arrow-btn');
+    const quickBtns = document.querySelectorAll('.quick-btn');
+    const colorBtns = document.querySelectorAll('.color-btn');
+    
+    if (lock) {
+        // 锁定：禁用所有控制
+        if (betInput) betInput.disabled = true;
+        if (sliderContainer) sliderContainer.style.pointerEvents = 'none';
+        opBtns.forEach(btn => btn.disabled = true);
+        arrowBtns.forEach(btn => btn.disabled = true);
+        quickBtns.forEach(btn => btn.disabled = true);
+        colorBtns.forEach(btn => btn.disabled = true);
+    } else {
+        // 解锁：恢复控制（根据付费状态）
+        if (betInput) betInput.disabled = false;
+        if (sliderContainer) sliderContainer.style.pointerEvents = 'auto';
+        
+        // 根据付费状态恢复按钮
+        updateUI();
+    }
+}
+
 // -------------- 摇骰子 --------------
 
 function rollDice() {
@@ -1285,13 +1520,19 @@ function finishRoll(results) {
         playSound(audioLose);
     }
 
+    // 添加历史记录（在重置下注数据之前）
+    addHistoryRecord(results, totalWin);
+    
+    // Auto 模式下，立即更新统计数据
+    if (autoEnabled) {
+        autoRoundCount++;
+        updateAutoStats();
+    }
+
     // 重置下注数据（游戏结束）
     bets = [0, 0, 0, 0, 0, 0];
     betAmounts = [0, 0, 0, 0, 0, 0];
     _lockedBetAmount = null;  // 重置本局锁定的下注金额
-    
-    // 添加历史记录
-    addHistoryRecord(results, totalWin);
     
     updateUI();
     // 结算后用户需要重新下注，updateUI() 会根据 bets 状态正确控制按钮

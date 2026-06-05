@@ -640,6 +640,103 @@
         .qty-btn:hover { background: #505050; border-color: #888; color: #fff; }
         .qty-btn.active { background: #6a6a6e; border-color: #0a0; color: #0f0; box-shadow: 0 0 8px rgba(0,255,0,0.3); }
 
+        /* Auto 功能区域 */
+        .auto-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            background: #3a3a3e;
+            border-radius: 8px;
+            border: 1px solid #555;
+        }
+        .auto-btn {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #6a4a9a 0%, #5a3a8a 100%);
+            border: 1px solid #7a5aaa;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(106, 74, 154, 0.4);
+        }
+        .auto-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #7a5aaa 0%, #6a4a9a 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 12px rgba(106, 74, 154, 0.6);
+        }
+        .auto-btn:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        .auto-btn:disabled {
+            background: #555;
+            border-color: #444;
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .auto-btn.running {
+            background: linear-gradient(135deg, #2a8a2a 0%, #1a7a1a 100%);
+            border-color: #3a9a3a;
+            box-shadow: 0 0 12px rgba(42, 138, 42, 0.5);
+            animation: autoPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes autoPulse {
+            0%, 100% { 
+                box-shadow: 0 0 12px rgba(42, 138, 42, 0.5);
+            }
+            50% { 
+                box-shadow: 0 0 20px rgba(42, 138, 42, 0.8);
+            }
+        }
+        .auto-icon {
+            font-size: 18px;
+        }
+        .auto-text {
+            min-width: 50px;
+            text-align: left;
+        }
+        .auto-info {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: #aaa;
+        }
+        .auto-rounds {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .auto-rounds #autoRoundCount {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .auto-profit {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .auto-profit #autoProfit {
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .auto-profit #autoProfit.positive {
+            color: #0f0;
+        }
+        .auto-profit #autoProfit.negative {
+            color: #ff8888;
+        }
+
         /* 开始按钮 */
         .start-btn {
             width: 100%;
@@ -887,6 +984,18 @@
             <button onclick="setBetQuantity('inf')" class="qty-btn active" data-qty="inf">∞</button>
             <button onclick="setBetQuantity(10)" class="qty-btn" data-qty="10">10</button>
             <button onclick="setBetQuantity(100)" class="qty-btn" data-qty="100">100</button>
+        </div>
+
+        <!-- Auto 功能区域 -->
+        <div class="auto-wrapper">
+            <button class="auto-btn" id="autoBtn" onclick="toggleAuto()">
+                <span class="auto-icon">⚡</span>
+                <span class="auto-text" id="autoText">Auto</span>
+            </button>
+            <div class="auto-info" id="autoInfo" style="display: none;">
+                <span class="auto-rounds">Round: <span id="autoRoundCount">0</span></span>
+                <span class="auto-profit">Profit: <span id="autoProfit">0.00</span></span>
+            </div>
         </div>
 
         <!-- 开始按钮 -->
