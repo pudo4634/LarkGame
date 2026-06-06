@@ -330,6 +330,41 @@
         }
         .bet-amount-label.show { opacity: 1; }
 
+        /* ========= 页签切换 ========= */
+        .tab-wrapper {
+            width: 92%;
+            max-width: 420px;
+            margin-top: 16px;
+        }
+        .tab-container {
+            display: flex;
+            gap: 8px;
+            background: #4a4a4e;
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid #555;
+        }
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: #aaa;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .tab-btn.active {
+            background: #2a8a2a;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(42,138,42,0.3);
+        }
+
         /* ========= 投注控制区（截图风格） ========= */
         .bet-control-wrapper {
             width: 92%;
@@ -620,7 +655,7 @@
 
         /* 投注数量 */
         .bet-quantity-row {
-            display: none;
+            display: none;  /* 默认隐藏，自动页签时通过 JS 设置为 flex */
             gap: 8px;
             margin-bottom: 16px;
         }
@@ -661,6 +696,86 @@
             color: #888;
             cursor: not-allowed;
             box-shadow: none;
+        }
+
+        /* ========= 高级设置区域 ========= */
+        .advanced-settings {
+            margin-top: 12px;
+            background: #3a3a3e;
+            border-radius: 8px;
+            border: 1px solid #555;
+            overflow: hidden;
+        }
+        .advanced-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #404044;
+            cursor: pointer;
+            border-bottom: 1px solid #555;
+        }
+        .advanced-header span {
+            font-size: 13px;
+            font-weight: bold;
+            color: #ccc;
+        }
+        .arrow-toggle-btn {
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 2px 6px;
+            transition: transform 0.2s;
+        }
+        .arrow-toggle-btn:hover {
+            color: #fff;
+        }
+        .arrow-toggle-btn.collapsed {
+            transform: rotate(-90deg);
+        }
+        .advanced-content {
+            padding: 12px;
+            display: none;  /* 默认收起 */
+        }
+        .advanced-content.expanded {
+            display: block;  /* 展开时显示 */
+        }
+        .advanced-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .advanced-row:last-child {
+            margin-bottom: 0;
+        }
+        .advanced-label {
+            font-size: 12px;
+            color: #aaa;
+            font-weight: bold;
+        }
+        .advanced-input-wrapper {
+            position: relative;
+        }
+        .advanced-input {
+            width: 100%;
+            background: #2a2a2e;
+            border: 1px solid #555;
+            border-radius: 6px;
+            padding: 8px 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .advanced-input:focus {
+            border-color: #0a0;
+        }
+        .advanced-input::placeholder {
+            color: #666;
         }
 
         /* ========= 底部信息栏 ========= */
@@ -816,6 +931,18 @@
         </div>
     </div>
 
+    <!-- 页签切换 -->
+    <div class="tab-wrapper">
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="switchTab('manual')" data-tab="manual">
+                <span>Manual</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('auto')" data-tab="auto">
+                <span>Auto</span>
+            </button>
+        </div>
+    </div>
+
     <!-- 投注控制区（截图风格） -->
     <div class="bet-control-wrapper">
         <!-- 金额 -->
@@ -828,7 +955,7 @@
         </div>
         <div class="bet-amount-row">
             <div class="bet-input">
-                <span class="currency-sign">¥</span>
+                <span class="currency-sign"></span>
                 <input type="text" 
                        class="bet-input-value" 
                        id="betAmountInput" 
@@ -882,15 +1009,49 @@
         </div>
 
         <!-- 投注数量 -->
-        <div class="bet-section-title" style="display: none;">Bet Quantity</div>
-        <div class="bet-quantity-row">
+        <div class="bet-section-title" id="betQuantityTitle" style="display: none;">Bet Quantity</div>
+        <div class="bet-quantity-row" id="betQuantityRow" style="display: none;">
             <button onclick="setBetQuantity('inf')" class="qty-btn active" data-qty="inf">∞</button>
             <button onclick="setBetQuantity(10)" class="qty-btn" data-qty="10">10</button>
             <button onclick="setBetQuantity(100)" class="qty-btn" data-qty="100">100</button>
         </div>
 
         <!-- 开始按钮 -->
-        <button class="start-btn" id="rollBtn" onclick="rollDice()">Bet</button>
+        <button class="start-btn" id="rollBtn" onclick="handleBetClick()">Bet</button>
+
+        <!-- 高级设置（仅自动页签显示） -->
+        <div class="advanced-settings" id="advancedSettings" style="display: none;">
+            <div class="advanced-header" onclick="toggleAdvancedSettings()">
+                <span>Advanced Settings</span>
+                <button class="arrow-toggle-btn" id="advancedToggleBtn">▼</button>
+            </div>
+            <div class="advanced-content" id="advancedContent">
+                <!-- 止盈 -->
+                <div class="advanced-row">
+                    <div class="advanced-label">Take Profit</div>
+                    <div class="advanced-input-wrapper">
+                        <input type="text"
+                               class="advanced-input"
+                               id="takeProfitInput"
+                               placeholder="0"
+                               oninput="validateIntegerInput(this)"
+                               maxlength="10">
+                    </div>
+                </div>
+                <!-- 止损 -->
+                <div class="advanced-row">
+                    <div class="advanced-label">Stop Loss</div>
+                    <div class="advanced-input-wrapper">
+                        <input type="text"
+                               class="advanced-input"
+                               id="stopLossInput"
+                               placeholder="0"
+                               oninput="validateIntegerInput(this)"
+                               maxlength="10">
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- 底部信息 -->
