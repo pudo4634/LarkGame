@@ -1286,12 +1286,12 @@ function finishRoll(results) {
     }
 
     // 重置下注数据（游戏结束）
+    // 注意：必须先添加历史记录，再重置 betAmounts，否则历史记录无法计算倍率
+    addHistoryRecord(results, totalWin);
+    
     bets = [0, 0, 0, 0, 0, 0];
     betAmounts = [0, 0, 0, 0, 0, 0];
     _lockedBetAmount = null;  // 重置本局锁定的下注金额
-    
-    // 添加历史记录
-    addHistoryRecord(results, totalWin);
     
     updateUI();
     // 结算后用户需要重新下注，updateUI() 会根据 bets 状态正确控制按钮
