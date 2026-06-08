@@ -983,6 +983,8 @@ function addBet(btn, forceQty, isAuto) {
     if (currentTab === 'auto' && !isAutoPlaying) {
         document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
+        // 启用高级设置输入框
+        updateAdvancedInputsState();
     }
     
     btn.style.transform = 'scale(0.95)';
@@ -1007,6 +1009,13 @@ function clearAllBets() {
     // 清除选中样式
     document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
     
+    // 清空高级设置输入框并禁用
+    const takeProfitInput = document.getElementById('takeProfitInput');
+    const stopLossInput = document.getElementById('stopLossInput');
+    if (takeProfitInput) takeProfitInput.value = '';
+    if (stopLossInput) stopLossInput.value = '';
+    updateAdvancedInputsState();
+    
     // 已付费玩家需要更新最大下注金额（因为余额变化了）
     if (isRechargeUser) {
         betConfig.maxBetAmount = balance;
@@ -1019,6 +1028,30 @@ function clearAllBets() {
     
     updateUI();
     showHint('All bets cleared', '');
+}
+
+/**
+ * 更新高级设置输入框的启用/禁用状态
+ * 自动页签下，未选择色块时禁用止盈止损输入框
+ */
+function updateAdvancedInputsState() {
+    const takeProfitInput = document.getElementById('takeProfitInput');
+    const stopLossInput = document.getElementById('stopLossInput');
+    if (!takeProfitInput || !stopLossInput) return;
+    
+    // 检查是否有色块被选中
+    const hasSelectedColor = document.querySelector('.color-btn.selected') !== null;
+    
+    takeProfitInput.disabled = !hasSelectedColor;
+    stopLossInput.disabled = !hasSelectedColor;
+    
+    // 更新样式
+    const opacity = hasSelectedColor ? '1' : '0.4';
+    const cursor = hasSelectedColor ? 'text' : 'not-allowed';
+    takeProfitInput.style.opacity = opacity;
+    takeProfitInput.style.cursor = cursor;
+    stopLossInput.style.opacity = opacity;
+    stopLossInput.style.cursor = cursor;
 }
 
 function updateUI() {
@@ -1448,10 +1481,11 @@ function switchTab(tab) {
         stopAutoPlay('User switched to manual tab');
     }
     
-    // 切换到手动页签时，清除自动页签的颜色选择样式
-    if (currentTab === 'auto' && tab === 'manual') {
-        document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
-    }
+    // 切换页签时清空已下注的筹码
+    clearAllBets();
+    
+    // 无论是否有下注，都清除选中样式
+    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
     
     currentTab = tab;
     
@@ -1478,6 +1512,9 @@ function switchTab(tab) {
         
         // 重置按钮为开始状态
         updateAutoPlayUI();
+        
+        // 初始化高级设置输入框状态（未选色块时禁用）
+        updateAdvancedInputsState();
     } else {
         // 手动页签：隐藏投注数量区域和高级设置
         quantityTitle.style.display = 'none';
