@@ -478,6 +478,7 @@
             padding: 12px;
             margin-top: 0px;
             border: 1px solid #555;
+            position: relative;
         }
 
         /* 清除按钮（行内） */
@@ -579,6 +580,7 @@
             border: 1px solid #555;
             padding: 8px 10px;
             gap: 2px;
+            position: relative;
         }
         .currency-sign {
             font-size: 14px;
@@ -680,12 +682,16 @@
 
         /* 拖动条（滑块） */
         .slider-container {
+            position: absolute;
+            top: -15px;
+            left: 0;
+            right: 0;
             background: #3a3a3e;
             border-radius: 8px;
             padding: 8px 16px;
-            margin-top: -4px;
-            margin-bottom: 6px;
             border: 1px solid #555;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .slider-labels {
             display: flex;
@@ -1103,8 +1109,8 @@
         <!-- 拖动条（滑块） -->
         <div class="slider-container" id="betSlider" style="display: none;">
             <div class="slider-labels">
-                <span class="slider-min" id="sliderMin">Min</span>
-                <span class="slider-max" id="sliderMax">Max</span>
+                <span class="slider-min" id="sliderMin" style="display: none;">Min</span>
+                <span class="slider-max" id="sliderMax" style="display: none;">Max</span>
             </div>
             <div class="slider-wrapper">
                 <button onclick="setSliderToMin()" class="slider-end-btn" id="minBtn">Min</button>
@@ -1120,7 +1126,7 @@
                 <button onclick="setSliderToMax()" class="slider-end-btn" id="maxBtn">Max</button>
             </div>
         </div>
-
+        
         <!-- 快捷金额 -->
         <div class="quick-amount-row" style="display: none;">
             <button onclick="setBetAmount(10)" class="quick-btn" data-amt="10">10.0</button>

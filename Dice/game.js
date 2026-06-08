@@ -621,7 +621,7 @@ function showToast(message) {
         toast.style.color = '#fff';
         toast.style.padding = '12px 24px';
         toast.style.borderRadius = '8px';
-        toast.style.fontSize = '14px';
+        toast.style.fontSize = '12px';
         toast.style.zIndex = '9999';
         toast.style.whiteSpace = 'nowrap';
         toast.style.opacity = '0';
@@ -869,12 +869,12 @@ function setSliderToMin() {
 
 /** 设置滑块到最大值 */
 function setSliderToMax() {
-    const config = getBetConfig();
+    const maxBet = getMaxBet();
     const slider = document.getElementById('betSliderInput');
     if (slider) {
-        slider.value = config.maxBetAmount;
-        setBetAmount(config.maxBetAmount);
-        updateSliderBackground(config.maxBetAmount);
+        slider.value = maxBet;
+        setBetAmount(maxBet);
+        updateSliderBackground(maxBet);
     }
 }
 
@@ -894,6 +894,15 @@ function setupSliderCloseHandler() {
             if (!clickedArrow) {
                 _sliderVisible = false;
                 slider.style.display = 'none';
+            }
+        }
+        
+        // 点击任意位置关闭 Max Bet 提示
+        const tooltip = document.getElementById('maxBetTooltip');
+        const infoIcon = document.querySelector('.info-icon');
+        if (tooltip && tooltip.style.display !== 'none') {
+            if (!tooltip.contains(event.target) && !infoIcon.contains(event.target)) {
+                closeMaxBetTip();
             }
         }
     });
@@ -983,7 +992,7 @@ function addBet(btn, forceQty, isAuto) {
         const expectedCost = 1 * _lockedBetAmount;
         
         if (cost !== expectedCost) {
-            showToast(`Bet amount locked at ${_lockedBetAmount}.00. Use same amount for all bets.`);
+            showToast(`Use same amount for all bets.`);
             return;
         }
     }
