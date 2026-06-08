@@ -456,8 +456,8 @@ function startRollAnimation(results) {
         d._endY   = endY;
         d._startY = dicePositions[i].y;
         d._phase  = 'waiting';
-        d._delay  = i * 250;       // 错开启动
-        d._duration = 2200 + i * 300; // 总时长 ms
+        d._delay  = i * 150;       // 错开启动（加快）
+        d._duration = 1200 + i * 200; // 总时长 ms（加快）
         return d;
     });
 
@@ -482,12 +482,12 @@ function startRollAnimation(results) {
             const progress = Math.min(elapsed / d._duration, 1);
 
             if (progress < 0.75) {
-                // 阶段1：快速旋转 + 下落
+                // 阶段 1：快速旋转 + 下落（加快旋转速度）
                 const p = progress / 0.75;
                 const spinFactor = 1 - p * 0.65;
 
-                d.rx += (0.2 + Math.sin(p * 10) * 0.05) * spinFactor * 360 / 60;
-                d.ry += (0.16 + Math.cos(p * 8) * 0.04) * spinFactor * 360 / 60;
+                d.rx += (0.35 + Math.sin(p * 10) * 0.08) * spinFactor * 360 / 60;
+                d.ry += (0.28 + Math.cos(p * 8) * 0.06) * spinFactor * 360 / 60;
 
                 // 下落
                 const yEase = p * p;

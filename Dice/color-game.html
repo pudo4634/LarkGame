@@ -101,15 +101,62 @@
             top: 70px;
             background: rgba(50,50,55,0.9);
             border-radius: 8px;
-            padding: 8px 12px;
+            padding: 0;
             border: 1px solid #555;
             z-index: 20;
             backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
         }
-        .payout-title { font-size: 13px; color: #ccc; margin-bottom: 6px; text-align: center; }
+        .toggle-icon {
+            font-size: 10px;
+            color: #999;
+            cursor: pointer;
+            padding: 0 6px;
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+            user-select: none;
+        }
+        .toggle-icon:hover { color: #fff; }
+        .toggle-icon.collapsed { transform: rotate(180deg); }
+        .payout-inner {
+            padding: 8px 12px;
+            overflow: hidden;
+            transition: width 0.3s ease, opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease, max-width 0.3s ease;
+            white-space: nowrap;
+        }
+        .payout-inner.collapsed {
+            width: 0 !important;
+            max-width: 0 !important;
+            opacity: 0;
+            padding-left: 0;
+            padding-right: 0;
+            overflow: hidden;
+        }
+        .payout-title {
+            font-size: 13px;
+            color: #ccc;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+        .payout-content {
+            overflow: hidden;
+        }
         .payout-item {
             display: flex; align-items: center; gap: 5px;
             margin: 4px 0; font-size: 12px;
+        }
+        .check-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border: 1px solid #666;
+            border-radius: 2px;
+            color: #aaa;
+            font-size: 10px;
+            line-height: 1;
         }
         .payout-check {
             width: 14px; height: 14px;
@@ -120,6 +167,24 @@
         }
         .payout-check.checked { background: #2a5; border-color: #4c7; color: #fff; }
         .payout-multiplier { color: #ffd700; font-weight: bold; margin-left: auto; }
+        .dice-icons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .dice-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.3);
+            line-height: 1;
+        }
+        .dice-icon:not(:empty) {
+            color: rgba(255, 255, 255, 0.8);
+        }
 
         /* ========= 游戏机 ========= */
         .machine-wrapper {
@@ -854,23 +919,28 @@
     <div class="game-container">
 
         <!-- 派彩面板 -->
-        <div class="payout-panel">
-            <div class="payout-title">Payout</div>
-            <div class="payout-item">
-                <div class="payout-check" id="check1">&#10003;</div>
-                <div>1 Dice</div>
-                <div class="payout-multiplier">x2</div>
+        <div class="payout-panel" id="payoutPanel">
+            <div class="payout-inner">
+                <div class="payout-title">派彩</div>
+                <div class="payout-content" id="payoutContent">
+                    <div class="payout-item">
+                        <span class="check-icon">✓</span>
+                        <div class="payout-multiplier">x2</div>
+                    </div>
+                    <div class="payout-item">
+                        <span class="check-icon">✓</span>
+                        <span class="check-icon">✓</span>
+                        <div class="payout-multiplier">x3</div>
+                    </div>
+                    <div class="payout-item">
+                        <span class="check-icon">✓</span>
+                        <span class="check-icon">✓</span>
+                        <span class="check-icon">✓</span>
+                        <div class="payout-multiplier">x16</div>
+                    </div>
+                </div>
             </div>
-            <div class="payout-item">
-                <div class="payout-check" id="check2">&#10003;</div>
-                <div>2 Dice</div>
-                <div class="payout-multiplier">x3</div>
-            </div>
-            <div class="payout-item">
-                <div class="payout-check" id="check3">&#10003;</div>
-                <div>3 Dice</div>
-                <div class="payout-multiplier">x16</div>
-            </div>
+            <span class="toggle-icon" id="payoutToggle">▶</span>
         </div>
 
         <!-- 游戏机 -->
@@ -1068,6 +1138,32 @@
     <audio id="audio-lose" src="assets/lose-color.mp3" preload="auto"></audio>
     <audio id="audio-roll" src="assets/normal-color.mp3" preload="auto"></audio>
     <audio id="audio-quick" src="assets/quick-color.mp3" preload="auto"></audio>
+    
+    <script>
+        // Payout 面板展开/收起
+        document.addEventListener('DOMContentLoaded', function() {
+            const payoutToggle = document.getElementById('payoutToggle');
+            const payoutInner = document.querySelector('.payout-inner');
+            
+            payoutToggle.addEventListener('click', function() {
+                const isCollapsed = payoutInner.classList.contains('collapsed');
+                
+                if (isCollapsed) {
+                    // 展开（向右展开）
+                    payoutInner.classList.remove('collapsed');
+                    payoutToggle.classList.remove('collapsed');
+                    payoutInner.style.width = 'auto';
+                    payoutInner.style.maxWidth = '';
+                } else {
+                    // 收起（向左收缩）
+                    payoutInner.classList.add('collapsed');
+                    payoutToggle.classList.add('collapsed');
+                    payoutInner.style.width = '0';
+                    payoutInner.style.maxWidth = '0';
+                }
+            });
+        });
+    </script>
     
     <script type="module" src="./src/main.jsx"></script>
     <script src="game.js"></script>
