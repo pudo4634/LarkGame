@@ -174,6 +174,21 @@ function getBetConfig() {
 }
 
 /**
+ * 获取最小下注金额
+ */
+function getMinBet() {
+    return getBetConfig().minBetAmount;
+}
+
+/**
+ * 获取最大下注金额
+ */
+function getMaxBet() {
+    const config = getBetConfig();
+    return Math.min(config.maxBetAmount, balance);
+}
+
+/**
  * 设置玩家付费状态（测试用）
  * @param {boolean} isRecharge - 是否已付费
  */
@@ -442,11 +457,11 @@ function startRollAnimation(results) {
 
     // 三个骰子的初始位置（相对于 machine-wrapper 314×499）
     const dicePositions = [
-        { x: 58,  y: 175 },
-        { x: 136, y: 175 },
-        { x: 214, y: 175 },
+        { x: 58,  y: 125 },
+        { x: 136, y: 125 },
+        { x: 214, y: 125 },
     ];
-    const endY = 370; // 停止时的 Y 位置
+    const endY = 270; // 停止时的 Y 位置
 
     const t0 = performance.now();
 
@@ -839,6 +854,28 @@ function onSliderChange(value) {
     
     setBetAmount(newVal);
     updateSliderBackground(newVal);
+}
+
+/** 设置滑块到最小值 */
+function setSliderToMin() {
+    const config = getBetConfig();
+    const slider = document.getElementById('betSliderInput');
+    if (slider) {
+        slider.value = config.minBetAmount;
+        setBetAmount(config.minBetAmount);
+        updateSliderBackground(config.minBetAmount);
+    }
+}
+
+/** 设置滑块到最大值 */
+function setSliderToMax() {
+    const config = getBetConfig();
+    const slider = document.getElementById('betSliderInput');
+    if (slider) {
+        slider.value = config.maxBetAmount;
+        setBetAmount(config.maxBetAmount);
+        updateSliderBackground(config.maxBetAmount);
+    }
 }
 
 /** 点击非拖动条区域关闭 */
