@@ -32,6 +32,7 @@ let autoPlayStartBalance = 0;     // 开始自动游戏时的余额
 let autoPlayMaxGames = 0;         // 最大游玩次数（0=无限）
 let autoPlayTakeProfit = 0;       // 止盈金额
 let autoPlayStopLoss = 0;         // 止损金额
+let _autoPlayColorIndex = 0;      // 自动游戏选择的颜色索引
 
 // 音效
 let audioWin = null;
@@ -926,6 +927,13 @@ function addBet(btn, forceQty, isAuto) {
     
     const config = getBetConfig();
     const idx = parseInt(btn.dataset.index);
+    
+    // 在自动页签下，记录玩家选择的颜色（用于自动游戏）
+    if (currentTab === 'auto' && !isAutoPlaying) {
+        _autoPlayColorIndex = idx;
+        console.log('[addBet] Auto tab: selected color index:', _autoPlayColorIndex, COLORS[idx].label);
+    }
+    
     // 每次下注固定为 1 个筹码（投注数量在自动模式下代表游玩次数）
     const qty = 1;
     const cost = qty * _betAmount;
@@ -970,6 +978,13 @@ function addBet(btn, forceQty, isAuto) {
     
     balance -= cost;
     updateUI();
+    
+    // 在自动页签下，更新选中样式
+    if (currentTab === 'auto' && !isAutoPlaying) {
+        document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+    }
+    
     btn.style.transform = 'scale(0.95)';
     setTimeout(() => btn.style.transform = '', 100);
 }
@@ -988,6 +1003,9 @@ function clearAllBets() {
     bets = [0, 0, 0, 0, 0, 0];
     betAmounts = [0, 0, 0, 0, 0, 0];
     _lockedBetAmount = null;  // 清除所有下注时重置锁定金额
+    
+    // 清除选中样式
+    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
     
     // 已付费玩家需要更新最大下注金额（因为余额变化了）
     if (isRechargeUser) {
@@ -1189,7 +1207,8 @@ function rollDice() {
 
     isRolling = true;
     document.getElementById('rollBtn').disabled = true;
-    document.getElementById('clearBtn').disabled = true;
+    const clearBtnEl = document.getElementById('clearBtn');
+    if (clearBtnEl) clearBtnEl.disabled = true;
     document.querySelectorAll('.color-btn').forEach(b => b.disabled = true);
     document.querySelectorAll('.payout-check').forEach(c => c.classList.remove('checked'));
 
@@ -1260,7 +1279,8 @@ function rollDice() {
 function finishRoll(results) {
     isRolling = false;
     document.getElementById('rollBtn').disabled = false;
-    document.getElementById('clearBtn').disabled = false;
+    const clearBtnEl = document.getElementById('clearBtn');
+    if (clearBtnEl) clearBtnEl.disabled = false;
     document.querySelectorAll('.color-btn').forEach(b => b.disabled = false);
     
     // 如果在自动游戏中，更新按钮样式为"Stop Auto"
@@ -1304,9 +1324,13 @@ function finishRoll(results) {
         if (betAmounts[ci] === 0) continue;
         maxMatch = Math.max(maxMatch, results.filter(r => r === ci).length);
     }
-    if (maxMatch >= 1) document.getElementById('check1').classList.add('checked');
-    if (maxMatch >= 2) document.getElementById('check2').classList.add('checked');
-    if (maxMatch >= 3) document.getElementById('check3').classList.add('checked');
+    // 添加空值检查，防止元素不存在时报错
+    const check1 = document.getElementById('check1');
+    const check2 = document.getElementById('check2');
+    const check3 = document.getElementById('check3');
+    if (maxMatch >= 1 && check1) check1.classList.add('checked');
+    if (maxMatch >= 2 && check2) check2.classList.add('checked');
+    if (maxMatch >= 3 && check3) check3.classList.add('checked');
 
     if (totalWin > 0) {
         balance += totalWin;
@@ -1424,6 +1448,11 @@ function switchTab(tab) {
         stopAutoPlay('User switched to manual tab');
     }
     
+    // 切换到手动页签时，清除自动页签的颜色选择样式
+    if (currentTab === 'auto' && tab === 'manual') {
+        document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+    }
+    
     currentTab = tab;
     
     // 更新按钮状态
@@ -1454,6 +1483,15 @@ function switchTab(tab) {
         quantityTitle.style.display = 'none';
         quantityRow.style.display = 'none';
         advancedSettings.style.display = 'none';
+        
+        // 重置按钮为手动模式
+        const rollBtn = document.getElementById('rollBtn');
+        if (rollBtn) {
+            rollBtn.textContent = 'Bet';
+            rollBtn.style.background = '#2a8a2a';
+            rollBtn.style.boxShadow = '0 3px 10px rgba(42,138,42,0.3)';
+            rollBtn.disabled = false;
+        }
     }
     
     console.log('[Tab Switch] Current tab:', tab);
@@ -1566,8 +1604,8 @@ function executeAutoBet() {
         return;
     }
     
-    // 随机选择颜色
-    const colorIndex = randomSelectColor();
+    // 使用玩家选择的颜色（而不是随机选择）
+    const colorIndex = _autoPlayColorIndex;
     console.log('[AutoPlay] Game', autoPlayGamesPlayed + 1, '- Betting on:', COLORS[colorIndex].label);
     
     // 清除所有下注（自动游戏每局都会清除旧下注）
@@ -1607,6 +1645,9 @@ function startAutoPlay() {
     
     // 获取游玩次数
     autoPlayMaxGames = _betQuantity === 'inf' ? 0 : _betQuantity;
+    
+    // 使用玩家在自动页签选择的颜色（如果没有选择，默认第一个颜色）
+    console.log('[AutoPlay] Using selected color index:', _autoPlayColorIndex, COLORS[_autoPlayColorIndex].label);
     
     // 记录初始余额
     autoPlayStartBalance = balance;
@@ -1674,11 +1715,16 @@ function updateAutoPlayUI() {
         rollBtn.disabled = false;  // 确保按钮可以点击
         console.log('[updateAutoPlayUI] Auto playing, button set to "Stop Auto"');
     } else {
-        rollBtn.textContent = 'Bet';
+        // 根据当前页签设置按钮文本
+        if (currentTab === 'auto') {
+            rollBtn.textContent = 'Start Auto Bet';
+        } else {
+            rollBtn.textContent = 'Bet';
+        }
         rollBtn.style.background = '#2a8a2a';
         rollBtn.style.boxShadow = '0 3px 10px rgba(42,138,42,0.3)';
         rollBtn.disabled = false;  // 确保按钮可以点击
-        console.log('[updateAutoPlayUI] Auto stopped, button set to "Bet"');
+        console.log('[updateAutoPlayUI] Auto stopped, button set to "' + rollBtn.textContent + '"');
     }
 }
 

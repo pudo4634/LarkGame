@@ -22,17 +22,17 @@
 
         /* ========= 顶部结果栏 ========= */
         .result-bar {
-            width: 92%;
-            max-width: 520px;
+            width: 85%;
+            max-width: 340px;
             background: #3a3a3e;
             border-radius: 8px;
-            padding: 8px 12px;
-            margin-top: 8px;
+            padding: 6px 10px;
+            margin-top: 0;
             text-align: center;
             font-size: 14px;
             color: #aaa;
             border: 1px solid #444;
-            min-height: 36px;
+            min-height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -42,18 +42,18 @@
 
         /* ========= 历史记录栏（顶部横向） ========= */
         .history-bar {
-            width: 92%;
-            max-width: 520px;
+            width: 85%;
+            max-width: 340px;
             background: #3a3a3e;
             border-radius: 8px;
-            padding: 8px 10px;
-            margin-top: 8px;
+            padding: 6px 8px;
+            margin-top: 0;
             border: 1px solid #444;
             display: flex;
-            gap: 6px;
+            gap: 4px;
             justify-content: flex-start;
             overflow-x: auto;
-            min-height: 44px;
+            min-height: 40px;
         }
         .history-item {
             flex: 0 0 auto;
@@ -97,8 +97,8 @@
         /* ========= 派彩面板 ========= */
         .payout-panel {
             position: absolute;
-            left: 8px;
-            top: 50px;
+            left: 6px;
+            top: 40px;
             background: rgba(50,50,55,0.9);
             border-radius: 8px;
             padding: 0;
@@ -191,7 +191,9 @@
             position: relative;
             width: 314px;
             height: 499px;
-            margin-top: 6px;
+            margin-top: 4px;
+            transform: scale(0.85);
+            transform-origin: top center;
         }
         .box-img {
             position: absolute;
@@ -291,10 +293,10 @@
 
         /* ========= 颜色面板 ========= */
         .color-panel-wrapper {
-            width: 92%;
-            max-width: 420px;
+            width: 75%;
+            max-width: 340px;
             position: relative;
-            margin-top: 16px;
+            margin-top: -100px;
         }
         .color-panel {
             background: #4a4a4e;
@@ -302,9 +304,34 @@
             padding: 8px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
+            gap: 3px;
             border: 1px solid #555;
             position: relative;
+        }
+        .clear-all-btn {
+            position: absolute;
+            bottom: 5px;
+            right: -40px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #5a5a5e;
+            border: 2px solid #666;
+            color: #aaa;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            z-index: 10;
+        }
+        .clear-all-btn:hover {
+            background: #6a6a6e;
+            color: #fff;
+            border-color: #888;
+        }
+        .clear-all-btn:active {
+            transform: scale(0.95);
         }
         .color-btn.win-flash {
             animation: colorBtnFlash 0.3s ease-in-out 5;
@@ -326,7 +353,7 @@
             align-items: center;
         }
         .color-btn {
-            width: 100%;
+            width: 85%;
             aspect-ratio: 5/3;
             border-radius: 6px;
             border: 2px solid transparent;
@@ -397,9 +424,9 @@
 
         /* ========= 页签切换 ========= */
         .tab-wrapper {
-            width: 92%;
-            max-width: 420px;
-            margin-top: 10px;
+            width: 100%;
+            max-width: 100%;
+            margin-top: 12px;
         }
         .tab-container {
             display: flex;
@@ -437,7 +464,7 @@
             background: #4a4a4e;
             border-radius: 12px;
             padding: 12px;
-            margin-top: 8px;
+            margin-top: 0px;
             border: 1px solid #555;
         }
 
@@ -700,8 +727,8 @@
         .quick-amount-row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-            margin-bottom: 12px;
+            gap: 4px;
+            margin-bottom: 8px;
         }
         .quick-btn {
             background: #3a3a3e;
@@ -721,8 +748,8 @@
         /* 投注数量 */
         .bet-quantity-row {
             display: none;  /* 默认隐藏，自动页签时通过 JS 设置为 flex */
-            gap: 6px;
-            margin-bottom: 12px;
+            gap: 4px;
+            margin-bottom: 8px;
         }
         .qty-btn {
             flex: 1;
@@ -999,18 +1026,12 @@
                 <div class="bet-amount-label" id="label-5">0.00</div>
             </div>
         </div>
-    </div>
-
-    <!-- 页签切换 -->
-    <div class="tab-wrapper">
-        <div class="tab-container">
-            <button class="tab-btn active" onclick="switchTab('manual')" data-tab="manual">
-                <span>Manual</span>
-            </button>
-            <button class="tab-btn" onclick="switchTab('auto')" data-tab="auto">
-                <span>Auto</span>
-            </button>
-        </div>
+        <button class="clear-all-btn" onclick="clearAllBets()" title="清除所有下注">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+        </button>
     </div>
 
     <!-- 投注控制区（截图风格） -->
@@ -1043,7 +1064,7 @@
             <div class="bet-ops">
                 <button onclick="adjustBetAmount(0.5)" class="op-btn">1/2</button>
                 <button onclick="adjustBetAmount(2)" class="op-btn">2×</button>
-                <button onclick="clearAllBets()" class="op-btn" id="clearBtn" title="清除所有下注">Clear</button>
+                <!--<button onclick="clearAllBets()" class="op-btn" id="clearBtn" title="清除所有下注">Clear</button>-->
             </div>
         </div>
         
@@ -1071,7 +1092,7 @@
         </div>
 
         <!-- 快捷金额 -->
-        <div class="quick-amount-row">
+        <div class="quick-amount-row" style="display: none;">
             <button onclick="setBetAmount(10)" class="quick-btn" data-amt="10">10.0</button>
             <button onclick="setBetAmount(100)" class="quick-btn" data-amt="100">100.0</button>
             <button onclick="setBetAmount(1000)" class="quick-btn" data-amt="1000">1.0k</button>
@@ -1079,7 +1100,7 @@
         </div>
 
         <!-- 投注数量 -->
-        <div class="bet-section-title" id="betQuantityTitle" style="display: none;">Bet Quantity</div>
+        <div class="bet-section-title" id="betQuantityTitle" style="display: none;">Number of Bets</div>
         <div class="bet-quantity-row" id="betQuantityRow" style="display: none;">
             <button onclick="setBetQuantity('inf')" class="qty-btn active" data-qty="inf">∞</button>
             <button onclick="setBetQuantity(10)" class="qty-btn" data-qty="10">10</button>
@@ -1088,6 +1109,18 @@
 
         <!-- 开始按钮 -->
         <button class="start-btn" id="rollBtn" onclick="handleBetClick()">Bet</button>
+
+        <!-- 页签切换 -->
+        <div class="tab-wrapper">
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="switchTab('manual')" data-tab="manual">
+                    <span>Manual</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('auto')" data-tab="auto">
+                    <span>Auto</span>
+                </button>
+            </div>
+        </div>
 
         <!-- 高级设置（仅自动页签显示） -->
         <div class="advanced-settings" id="advancedSettings" style="display: none;">
@@ -1098,7 +1131,7 @@
             <div class="advanced-content" id="advancedContent">
                 <!-- 止盈 -->
                 <div class="advanced-row">
-                    <div class="advanced-label">Take Profit</div>
+                    <div class="advanced-label">Stop on win</div>
                     <div class="advanced-input-wrapper">
                         <input type="text"
                                class="advanced-input"
@@ -1110,7 +1143,7 @@
                 </div>
                 <!-- 止损 -->
                 <div class="advanced-row">
-                    <div class="advanced-label">Stop Loss</div>
+                    <div class="advanced-label">Stop on loss</div>
                     <div class="advanced-input-wrapper">
                         <input type="text"
                                class="advanced-input"
