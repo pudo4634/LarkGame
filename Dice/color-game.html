@@ -459,6 +459,15 @@
             color: #fff;
             box-shadow: 0 2px 8px rgba(42,138,42,0.3);
         }
+        .tab-btn:disabled {
+            background: #3a3a3e;
+            color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .tab-btn:disabled:hover {
+            background: #3a3a3e;
+        }
 
         /* ========= 投注控制区（截图风格） ========= */
         .bet-control-wrapper {
@@ -645,6 +654,12 @@
         }
         .op-btn:hover { background: #666; color: #fff; }
         .op-btn:disabled {
+            background: #3a3a3e;
+            border-color: #444;
+            color: #666;
+            cursor: not-allowed;
+        }
+        .slider-end-btn:disabled {
             background: #3a3a3e;
             border-color: #444;
             color: #666;
@@ -1079,8 +1094,8 @@
                 </div>
             </div>
             <div class="bet-ops">
-                <button onclick="adjustBetAmount(0.5)" class="op-btn">1/2</button>
-                <button onclick="adjustBetAmount(2)" class="op-btn">2×</button>
+                <button onclick="adjustBetAmount(0.5)" class="op-btn" id="halfBtn">1/2</button>
+                <button onclick="adjustBetAmount(2)" class="op-btn" id="doubleBtn">2×</button>
                 <!--<button onclick="clearAllBets()" class="op-btn" id="clearBtn" title="清除所有下注">Clear</button>-->
             </div>
         </div>
@@ -1092,7 +1107,7 @@
                 <span class="slider-max" id="sliderMax">Max</span>
             </div>
             <div class="slider-wrapper">
-                <button onclick="setSliderToMin()" class="slider-end-btn">Min</button>
+                <button onclick="setSliderToMin()" class="slider-end-btn" id="minBtn">Min</button>
                 <input type="range" 
                        class="bet-slider" 
                        id="betSliderInput" 
@@ -1102,7 +1117,7 @@
                        value="10"
                        oninput="onSliderChange(this.value)"
                        onchange="onSliderChange(this.value)">
-                <button onclick="setSliderToMax()" class="slider-end-btn">Max</button>
+                <button onclick="setSliderToMax()" class="slider-end-btn" id="maxBtn">Max</button>
             </div>
         </div>
 
@@ -1131,7 +1146,7 @@
                 <button class="tab-btn active" onclick="switchTab('manual')" data-tab="manual">
                     <span>Manual</span>
                 </button>
-                <button class="tab-btn" onclick="switchTab('auto')" data-tab="auto">
+                <button class="tab-btn" onclick="switchTab('auto')" data-tab="auto" id="autoTabBtn">
                     <span>Auto</span>
                 </button>
             </div>

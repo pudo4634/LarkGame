@@ -1151,6 +1151,14 @@ function updateUI() {
         document.querySelectorAll('.arrow-btn').forEach(btn => {
             btn.disabled = true;
         });
+        // 禁用 Min/Max 滑块按钮
+        const minBtn = document.getElementById('minBtn');
+        const maxBtn = document.getElementById('maxBtn');
+        if (minBtn) minBtn.disabled = true;
+        if (maxBtn) maxBtn.disabled = true;
+        // 禁用 Auto 页签按钮
+        const autoTabBtn = document.getElementById('autoTabBtn');
+        if (autoTabBtn) autoTabBtn.disabled = true;
         // 隐藏拖动条
         const slider = document.getElementById('betSlider');
         if (slider) slider.style.display = 'none';
@@ -1163,6 +1171,12 @@ function updateUI() {
         document.querySelectorAll('.arrow-btn').forEach(btn => {
             btn.disabled = false;
         });
+        const minBtn = document.getElementById('minBtn');
+        const maxBtn = document.getElementById('maxBtn');
+        if (minBtn) minBtn.disabled = false;
+        if (maxBtn) maxBtn.disabled = false;
+        const autoTabBtn = document.getElementById('autoTabBtn');
+        if (autoTabBtn) autoTabBtn.disabled = false;
         // 更新拖动条范围
         updateSliderRange();
     }
@@ -1489,7 +1503,7 @@ if(accessToken === undefined || accessToken === null){
     console.log('[Game Init] No token, initializing with default data...');
     initPlayerData({
         initialAmount: 1000,
-        isRecharge: true  // false=未付费，true=已付费
+        isRecharge: true // false=未付费，true=已付费
     });
 } else {
     // 如果有 token 但未从服务器获取数据，也初始化一个默认余额用于测试
@@ -1513,6 +1527,12 @@ initAudio();
  * @param {string} tab - 'manual' 或 'auto'
  */
 function switchTab(tab) {
+    // 未付费玩家不能使用 Auto 功能
+    if (tab === 'auto' && !isRechargeUser) {
+        showHint('Auto mode is only available for paid users', 'error');
+        return;
+    }
+    
     // 如果从自动页签切换到手动页签，停止自动游戏
     if (currentTab === 'auto' && tab === 'manual' && isAutoPlaying) {
         stopAutoPlay('User switched to manual tab');
