@@ -32,7 +32,7 @@ let autoPlayStartBalance = 0;     // 开始自动游戏时的余额
 let autoPlayMaxGames = 0;         // 最大游玩次数（0=无限）
 let autoPlayTakeProfit = 0;       // 止盈金额
 let autoPlayStopLoss = 0;         // 止损金额
-let _autoPlayColorIndex = 0;      // 自动游戏选择的颜色索引
+let _autoPlayColorIndexes = [];     // 自动游戏选择的颜色索引数组
 
 // 音效
 let audioWin = null;
@@ -974,10 +974,17 @@ function addBet(btn, forceQty, isAuto) {
     const config = getBetConfig();
     const idx = parseInt(btn.dataset.index);
     
-    // 在自动页签下，记录玩家选择的颜色（用于自动游戏）
+    // 在自动页签下，记录玩家选择的颜色（支持多选）
     if (currentTab === 'auto' && !isAutoPlaying) {
-        _autoPlayColorIndex = idx;
-        console.log('[addBet] Auto tab: selected color index:', _autoPlayColorIndex, COLORS[idx].label);
+        // 如果这个颜色已经选中，则取消选中；否则添加选中
+        const existingIndex = _autoPlayColorIndexes.indexOf(idx);
+        if (existingIndex > -1) {
+            _autoPlayColorIndexes.splice(existingIndex, 1);
+        } else {
+            _autoPlayColorIndexes.push(idx);
+        }
+        console.log('[addBet] Auto tab: selected color indexes:', _autoPlayColorIndexes, 
+                    _autoPlayColorIndexes.map(i => COLORS[i].label));
     }
     
     // 每次下注固定为 1 个筹码（投注数量在自动模式下代表游玩次数）
@@ -1751,21 +1758,21 @@ function executeAutoBet() {
         return;
     }
     
-    // 使用玩家选择的颜色（而不是随机选择）
-    const colorIndex = _autoPlayColorIndex;
-    console.log('[AutoPlay] Game', autoPlayGamesPlayed + 1, '- Betting on:', COLORS[colorIndex].label);
+    // 使用玩家选择的颜色数组（如果没有选择，默认第一个颜色）
+    const colorIndexes = _autoPlayColorIndexes.length > 0 ? _autoPlayColorIndexes : [0];
+    console.log('[AutoPlay] Game', autoPlayGamesPlayed + 1, '- Betting on:', 
+                colorIndexes.map(i => COLORS[i].label));
     
     // 清除所有下注（自动游戏每局都会清除旧下注）
     clearAllBets();
     
-    // 模拟点击颜色按钮进行下注（自动游戏每局固定下注 1 个筹码）
-    const colorBtn = document.querySelector(`.color-btn[data-index="${colorIndex}"]`);
-    console.log('[AutoPlay] colorBtn found:', !!colorBtn, 'index:', colorIndex);
-    if (colorBtn) {
-        console.log('[AutoPlay] About to call addBet with qty=1');
-        addBet(colorBtn, 1, true);  // 传入 true 表示是自动游戏，跳过锁定检查
-        console.log('[AutoPlay] addBet called');
-    }
+    // 对每个选中的颜色下注
+    colorIndexes.forEach(colorIndex => {
+        const colorBtn = document.querySelector(`.color-btn[data-index="${colorIndex}"]`);
+        if (colorBtn) {
+            addBet(colorBtn, 1, true);  // 传入 true 表示是自动游戏，跳过锁定检查
+        }
+    });
     
     // 开始游戏
     rollDice();
@@ -1793,8 +1800,9 @@ function startAutoPlay() {
     // 获取游玩次数
     autoPlayMaxGames = _betQuantity === 'inf' ? 0 : _betQuantity;
     
-    // 使用玩家在自动页签选择的颜色（如果没有选择，默认第一个颜色）
-    console.log('[AutoPlay] Using selected color index:', _autoPlayColorIndex, COLORS[_autoPlayColorIndex].label);
+    // 使用玩家在自动页签选择的颜色数组（如果没有选择，默认第一个颜色）
+    console.log('[AutoPlay] Using selected color indexes:', _autoPlayColorIndexes, 
+                _autoPlayColorIndexes.map(i => COLORS[i].label));
     
     // 记录初始余额
     autoPlayStartBalance = balance;
