@@ -31,7 +31,7 @@
             text-align: center;
             font-size: 14px;
             color: #aaa;
-            border: 1px solid #444;加点伪3d效果
+            border: 1px solid #444;  /*加点伪3d效果 */
             min-height: 32px;
             display: flex;
             align-items: center;
@@ -293,6 +293,76 @@
         }
         .hint-text.win { color: #ffd700; font-size: 20px; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
         .hint-text.lose { color: #ff8888; }
+
+        /* ========= 胜利结算图层 ========= */
+        .win-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .win-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .win-overlay-inner {
+            position: relative;
+            width: 340px;
+            height: 480px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transform: scale(0.8);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .win-overlay.show .win-overlay-inner {
+            transform: scale(1);
+        }
+        .win-overlay-bg {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .win-overlay-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 40px 20px 20px;
+            width: 100%;
+        }
+        .win-overlay-multiplier {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 15px rgba(255,215,0,0.6), 0 2px 8px rgba(0,0,0,0.8);
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+        .win-overlay-amount {
+            font-size: 42px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(0,255,0,0.5), 0 2px 10px rgba(0,0,0,0.8);
+            letter-spacing: 1px;
+        }
+        .win-overlay-amount .currency {
+            font-size: 24px;
+            color: #0f0;
+            margin-right: 4px;
+        }
 
         /* ========= 颜色面板 ========= */
         .color-panel-wrapper {
@@ -1207,6 +1277,17 @@
     <audio id="audio-lose" src="assets/lose-color.mp3" preload="auto"></audio>
     <audio id="audio-roll" src="assets/normal-color.mp3" preload="auto"></audio>
     <audio id="audio-quick" src="assets/quick-color.mp3" preload="auto"></audio>
+    
+    <!-- 胜利结算图层 -->
+    <div class="win-overlay" id="winOverlay">
+        <div class="win-overlay-inner">
+            <img src="assets/win.png" alt="" class="win-overlay-bg" onerror="this.style.display='none'">
+            <div class="win-overlay-content">
+                <div class="win-overlay-multiplier" id="winMultiplier">X2 X3 X16</div>
+                <div class="win-overlay-amount"><span class="currency">NGN</span><span id="winAmount">0</span></div>
+            </div>
+        </div>
+    </div>
     
     <script>
         // Payout 面板展开/收起

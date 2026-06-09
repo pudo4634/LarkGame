@@ -1198,6 +1198,37 @@ function showHint(text, type) {
 }
 
 /**
+ * 显示胜利结算图层
+ * @param {number} totalWin - 总赢利金额
+ * @param {number} maxHitCount - 最高命中骰子数 (1/2/3)
+ */
+function showWinOverlay(totalWin, maxHitCount) {
+    const overlay = document.getElementById('winOverlay');
+    const multiplierEl = document.getElementById('winMultiplier');
+    const amountEl = document.getElementById('winAmount');
+    
+    // 根据命中骰子数显示对应倍率
+    let multiplierText = 'X2';
+    if (maxHitCount === 2) {
+        multiplierText = 'X3';
+    } else if (maxHitCount === 3) {
+        multiplierText = 'X16';
+    }
+    multiplierEl.textContent = multiplierText;
+    
+    // 设置赢利金额（保留 2 位小数）
+    amountEl.textContent = totalWin.toFixed(2);
+    
+    // 显示图层
+    overlay.classList.add('show');
+    
+    // 2.8 秒后自动隐藏（在下一局开始前消失）
+    setTimeout(() => {
+        overlay.classList.remove('show');
+    }, 2800);
+}
+
+/**
  * 添加历史记录
  * @param {number[]} results - 骰子结果数组 [0-5, 0-5, 0-5]
  * @param {number} totalWin - 总赢利金额
@@ -1388,6 +1419,7 @@ function finishRoll(results) {
     
     let totalWin = 0;
     let winMessages = [];
+    let maxHitCount = 0;  // 记录最高命中骰子数
 
     for (let ci = 0; ci < 6; ci++) {
         if (betAmounts[ci] === 0) continue;
@@ -1395,9 +1427,18 @@ function finishRoll(results) {
         const bet = betAmounts[ci];  // 使用实际下注金额
         console.log(`颜色 ${ci} (${COLORS[ci].label}): 下注=${bet}, 命中数量=${mc}`);
         let win = 0;
-        if (mc === 1)      win = bet * 2;
-        else if (mc === 2) win = bet * 3;
-        else if (mc === 3) win = Math.floor(bet * 16);
+        if (mc === 1) {
+            win = bet * 2;
+            if (mc > maxHitCount) maxHitCount = mc;
+        }
+        else if (mc === 2) {
+            win = bet * 3;
+            if (mc > maxHitCount) maxHitCount = mc;
+        }
+        else if (mc === 3) {
+            win = Math.floor(bet * 16);
+            if (mc > maxHitCount) maxHitCount = mc;
+        }
         if (win > 0) {
             totalWin += win;
             const mult = mc === 1 ? 2 : mc === 2 ? 3 : 16;
@@ -1431,8 +1472,8 @@ function finishRoll(results) {
         if (isRechargeUser) {
             betConfig.maxBetAmount = balance;
         }
-        showHint('Congratulations! Won ' + totalWin + '!', 'win');
-        spawnCoins();
+        //showHint('Congratulations! Won ' + totalWin + '!', 'win');
+        //spawnCoins();
         
         // 播放中奖音效
         playSound(audioWin);
@@ -1448,6 +1489,9 @@ function finishRoll(results) {
             }
         }
         triggerWinFlash(winningColors);
+        
+        // 显示胜利结算图层（传入最高命中骰子数）
+        showWinOverlay(totalWin, maxHitCount);
     } else {
         showHint('Sorry, try again!', 'lose');
         // 播放失败音效
