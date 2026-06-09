@@ -75,14 +75,28 @@ let isRechargeUser = false;
 let UNRECHARGED_CONFIG = {
     minBetAmount: 10,    // 最小下注金额
     maxBetAmount: 1000,  // 最大下注金额
-    maxBetTimes: 6       // 最大下注次数（颜色数量）
+    maxBetTimes: 6,      // 最大下注次数（颜色数量）
+    // 倍率配置（由服务器传递）
+    payoutMultipliers: {
+        one: 2,    // 1个匹配骰子的倍率
+        two: 3,    // 2个匹配骰子的倍率
+        three: 16  // 3个匹配骰子的倍率
+    }
 };
 
-window.initData = function (minUnitBet, maxUnitBet, balance, isRecharge)
+window.initData = function (minUnitBet, maxUnitBet, balance, isRecharge, payoutMultipliers)
 {
     UNRECHARGED_CONFIG.minBetAmount = minUnitBet;
     UNRECHARGED_CONFIG.maxBetAmount = maxUnitBet;
     isRechargeUser = isRecharge;
+    // 如果服务器传递了倍率配置，则更新
+    if (payoutMultipliers) {
+        UNRECHARGED_CONFIG.payoutMultipliers = {
+            one: payoutMultipliers.one || 2,
+            two: payoutMultipliers.two || 3,
+            three: payoutMultipliers.three || 16
+        };
+    }
     initPlayerData({
         initialAmount: balance,
         isRecharge: isRecharge,
@@ -137,16 +151,20 @@ function initPlayerData(options = {}) {
     
     // 设置下注配置
     if (config) {
-        // 使用自定义配置
-        betConfig = { ...config };
+        // 使用自定义配置，保留倍率配置
+        betConfig = { 
+            ...config,
+            payoutMultipliers: config.payoutMultipliers || UNRECHARGED_CONFIG.payoutMultipliers
+        };
     } else {
         // 根据付费状态自动设置配置
         if (isRecharge) {
-            // 已付费玩家无限制
+            // 已付费玩家无限制，但保留倍率配置
             betConfig = {
                 minBetAmount: 10,
                 maxBetAmount: balance,
-                maxBetTimes: Infinity
+                maxBetTimes: Infinity,
+                payoutMultipliers: UNRECHARGED_CONFIG.payoutMultipliers
             };
         } else {
             // 未付费玩家使用限制配置
@@ -1214,12 +1232,16 @@ function showWinOverlay(totalWin, maxHitCount) {
     const multiplierEl = document.getElementById('winMultiplier');
     const amountEl = document.getElementById('winAmount');
     
+    // 获取倍率配置
+    const config = getBetConfig();
+    const multipliers = config.payoutMultipliers || defaultPayoutMultipliers;
+    
     // 根据命中骰子数显示对应倍率
-    let multiplierText = 'X2';
+    let multiplierText = 'X' + multipliers.one;
     if (maxHitCount === 2) {
-        multiplierText = 'X3';
+        multiplierText = 'X' + multipliers.two;
     } else if (maxHitCount === 3) {
-        multiplierText = 'X16';
+        multiplierText = 'X' + multipliers.three;
     }
     multiplierEl.textContent = multiplierText;
     
@@ -1245,16 +1267,20 @@ function addHistoryRecord(results, totalWin) {
     let maxMultiplier = 0;
     let hasWin = totalWin > 0;
     
+    // 获取倍率配置
+    const config = getBetConfig();
+    const multipliers = config.payoutMultipliers || defaultPayoutMultipliers;
+    
     // 检查所有下注的颜色，找出最高倍率
     for (let ci = 0; ci < 6; ci++) {
         if (betAmounts[ci] === 0) continue;
         const mc = results.filter(r => r === ci).length;
-        if (mc === 3) {
-            maxMultiplier = 16;
-        } else if (mc === 2 && maxMultiplier < 3) {
-            maxMultiplier = 3;
-        } else if (mc === 1 && maxMultiplier < 2) {
-            maxMultiplier = 2;
+        if (mc === 3 && maxMultiplier < multipliers.three) {
+            maxMultiplier = multipliers.three;
+        } else if (mc === 2 && maxMultiplier < multipliers.two) {
+            maxMultiplier = multipliers.two;
+        } else if (mc === 1 && maxMultiplier < multipliers.one) {
+            maxMultiplier = multipliers.one;
         }
     }
     
@@ -1427,6 +1453,10 @@ function finishRoll(results) {
     let totalWin = 0;
     let winMessages = [];
     let maxHitCount = 0;  // 记录最高命中骰子数
+    
+    // 获取倍率配置
+    const config = getBetConfig();
+    const multipliers = config.payoutMultipliers || defaultPayoutMultipliers;
 
     for (let ci = 0; ci < 6; ci++) {
         if (betAmounts[ci] === 0) continue;
@@ -1435,20 +1465,20 @@ function finishRoll(results) {
         console.log(`颜色 ${ci} (${COLORS[ci].label}): 下注=${bet}, 命中数量=${mc}`);
         let win = 0;
         if (mc === 1) {
-            win = bet * 2;
+            win = bet * multipliers.one;
             if (mc > maxHitCount) maxHitCount = mc;
         }
         else if (mc === 2) {
-            win = bet * 3;
+            win = bet * multipliers.two;
             if (mc > maxHitCount) maxHitCount = mc;
         }
         else if (mc === 3) {
-            win = Math.floor(bet * 16);
+            win = Math.floor(bet * multipliers.three);
             if (mc > maxHitCount) maxHitCount = mc;
         }
         if (win > 0) {
             totalWin += win;
-            const mult = mc === 1 ? 2 : mc === 2 ? 3 : 16;
+            const mult = mc === 1 ? multipliers.one : mc === 2 ? multipliers.two : multipliers.three;
             winMessages.push(COLORS[ci].label + ' hit ' + mc + ' x' + mult);
             console.log(`  → 中奖！赢得 ${win}`);
         } else {
@@ -1559,6 +1589,13 @@ const urlParams = new URLSearchParams(window.location.search);
 const accessToken = urlParams.get("token");
 console.log('[Game Init] accessToken:', accessToken);
 
+// 默认倍率配置
+const defaultPayoutMultipliers = {
+    one: 2,
+    two: 3,
+    three: 16
+};
+
 if(accessToken === undefined || accessToken === null){
     console.log('[Game Init] No token, initializing with default data...');
     initPlayerData({
@@ -1574,6 +1611,27 @@ if(accessToken === undefined || accessToken === null){
     });
 }
 console.log('[Game Init] Initialized - balance:', balance, 'isRechargeUser:', isRechargeUser, 'betConfig:', getBetConfig(), '_betAmount:', _betAmount);
+
+// 初始化 Payout 面板显示
+function initPayoutPanel() {
+    const config = getBetConfig();
+    const multipliers = config.payoutMultipliers || defaultPayoutMultipliers;
+    
+    // 更新 Payout 面板中的倍率显示
+    const payoutItems = document.querySelectorAll('.payout-item');
+    if (payoutItems.length >= 3) {
+        payoutItems[0].querySelector('.payout-multiplier').textContent = 'x' + multipliers.one;
+        payoutItems[1].querySelector('.payout-multiplier').textContent = 'x' + multipliers.two;
+        payoutItems[2].querySelector('.payout-multiplier').textContent = 'x' + multipliers.three;
+    }
+}
+
+// DOM 加载完成后初始化 Payout 面板
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPayoutPanel);
+} else {
+    initPayoutPanel();
+}
 
 // 初始化音效
 initAudio();
