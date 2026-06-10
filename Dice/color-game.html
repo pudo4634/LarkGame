@@ -109,7 +109,7 @@
             left: 6px;
             top: 40px;
             background: rgba(50,50,55,0.9);
-            border-radius: 8px;
+            border-radius: 6px;
             padding: 0;
             border: 1px solid #555;
             z-index: 20;
@@ -118,10 +118,10 @@
             align-items: center;
         }
         .toggle-icon {
-            font-size: 10px;
+            font-size: 8px;
             color: #999;
             cursor: pointer;
-            padding: 0 6px;
+            padding: 0 4px;
             transition: transform 0.3s ease;
             flex-shrink: 0;
             user-select: none;
@@ -129,7 +129,7 @@
         .toggle-icon:hover { color: #fff; }
         .toggle-icon.collapsed { transform: rotate(180deg); }
         .payout-inner {
-            padding: 8px 12px;
+            padding: 0px 0px;
             overflow: hidden;
             transition: width 0.3s ease, opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease, max-width 0.3s ease;
             white-space: nowrap;
@@ -143,24 +143,24 @@
             overflow: hidden;
         }
         .payout-title {
-            font-size: 13px;
+            font-size: 10px;
             color: #ccc;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             text-align: center;
         }
         .payout-content {
             overflow: hidden;
         }
         .payout-item {
-            display: flex; align-items: center; gap: 5px;
-            margin: 4px 0; font-size: 12px;
+            display: flex; align-items: center; gap: 3px;
+            margin: 3px 0; font-size: 10px;
         }
         .check-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             border: 1px solid #666;
             border-radius: 2px;
             color: #aaa;
@@ -374,8 +374,8 @@
 
         /* ========= 颜色面板 ========= */
         .color-panel-wrapper {
-            width: 65%;
-            max-width: 280px;
+            width: 70%;
+            max-width: 320px;
             position: relative;
             margin-top: -150px;
         }
@@ -392,9 +392,9 @@
         .clear-all-btn {
             position: absolute;
             bottom: 5px;
-            right: -40px;
-            width: 36px;
-            height: 36px;
+            right: -35px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             background: #5a5a5e;
             border: 2px solid #666;
@@ -434,9 +434,9 @@
             align-items: center;
         }
         .color-btn {
-            width: 85%;
-            aspect-ratio: 5/3;
-            border-radius: 6px;
+            width: 100%;
+            aspect-ratio: 4/3;
+            border-radius: 8px;
             border: 2px solid transparent;
             cursor: pointer;
             transition: all 0.15s ease;
@@ -489,19 +489,50 @@
         .chip:nth-child(8) { margin-top: -35px; }
 
         .bet-amount-label {
-            margin-top: 5px;
-            font-size: 8px;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 13px;
             font-weight: bold;
-            color: #ffd700;
-            background: rgba(0,0,0,0.3);
-            padding: 2px 6px;
-            border-radius: 8px;
-            min-width: 45px;
-            text-align: center;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+            pointer-events: none;
             opacity: 0;
             transition: opacity 0.2s;
+            z-index: 10;
+            white-space: nowrap;
         }
         .bet-amount-label.show { opacity: 1; }
+
+        /* 下注金额向上消失动画 */
+        .bet-float-up {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 15;
+            animation: floatUp 0.8s ease-out forwards;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bet-float-up .chip-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: url('assets/chip.webp') no-repeat center center;
+            background-size: contain;
+        }
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -120%);
+            }
+        }
 
         /* ========= 页签切换 ========= */
         .tab-wrapper {
@@ -692,22 +723,28 @@
         }
         .bet-arrows {
             display: flex;
-            flex-direction: column;
-            gap: 1px;
+            align-items: center;
         }
         .arrow-btn {
             background: #555;
             border: none;
             color: #ccc;
             font-size: 8px;
-            width: 18px; height: 12px;
-            border-radius: 3px;
+            width: 18px; height: 20px;
+            border-radius: 4px;
             cursor: pointer;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             line-height: 1;
             padding: 0;
+            gap: 0;
+        }
+        .arrow-btn .arrow-up,
+        .arrow-btn .arrow-down {
+            line-height: 1;
+            display: block;
         }
         .arrow-btn:hover { background: #666; }
         .arrow-btn:disabled {
@@ -1083,7 +1120,7 @@
                     </div>
                 </div>
             </div>
-            <span class="toggle-icon" id="payoutToggle">▶</span>
+            <span class="toggle-icon" id="payoutToggle">◀</span>
         </div>
 
         <!-- 游戏机 -->
@@ -1108,42 +1145,42 @@
             <div class="color-btn-wrapper">
                 <div class="color-btn yellow" data-color="yellow" data-index="0" onclick="addBet(this)">
                     <div class="chip-stack" id="chips-0"></div>
+                    <div class="bet-amount-label" id="label-0">0.00</div>
                 </div>
-                <div class="bet-amount-label" id="label-0">0.00</div>
             </div>
             <div class="color-btn-wrapper">
                 <div class="color-btn white" data-color="white" data-index="1" onclick="addBet(this)">
                     <div class="chip-stack" id="chips-1"></div>
+                    <div class="bet-amount-label" id="label-1">0.00</div>
                 </div>
-                <div class="bet-amount-label" id="label-1">0.00</div>
             </div>
             <div class="color-btn-wrapper">
                 <div class="color-btn pink" data-color="pink" data-index="2" onclick="addBet(this)">
                     <div class="chip-stack" id="chips-2"></div>
+                    <div class="bet-amount-label" id="label-2">0.00</div>
                 </div>
-                <div class="bet-amount-label" id="label-2">0.00</div>
             </div>
             <div class="color-btn-wrapper">
                 <div class="color-btn blue" data-color="blue" data-index="3" onclick="addBet(this)">
                     <div class="chip-stack" id="chips-3"></div>
+                    <div class="bet-amount-label" id="label-3">0.00</div>
                 </div>
-                <div class="bet-amount-label" id="label-3">0.00</div>
             </div>
             <div class="color-btn-wrapper">
                 <div class="color-btn orange" data-color="orange" data-index="4" onclick="addBet(this)">
                     <div class="chip-stack" id="chips-4"></div>
+                    <div class="bet-amount-label" id="label-4">0.00</div>
                 </div>
-                <div class="bet-amount-label" id="label-4">0.00</div>
             </div>
             <div class="color-btn-wrapper">
                 <div class="color-btn green" data-color="green" data-index="5" onclick="addBet(this)">
                     <div class="chip-stack" id="chips-5"></div>
+                    <div class="bet-amount-label" id="label-5">0.00</div>
                 </div>
-                <div class="bet-amount-label" id="label-5">0.00</div>
             </div>
         </div>
         <button class="clear-all-btn" onclick="clearAllBets()" title="清除所有下注">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="23 4 23 10 17 10"></polyline>
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
             </svg>
@@ -1173,8 +1210,10 @@
                        maxlength="10">
                 <span class="chip-icon"></span>
                 <div class="bet-arrows">
-                    <button onclick="toggleSlider()" class="arrow-btn">▲</button>
-                    <button onclick="toggleSlider()" class="arrow-btn">▼</button>
+                    <button onclick="toggleSlider()" class="arrow-btn" id="sliderToggleBtn">
+                        <span class="arrow-up">▲</span>
+                        <span class="arrow-down">▼</span>
+                    </button>
                 </div>
             </div>
             <div class="bet-ops">
