@@ -21,17 +21,26 @@ getUserInfo(9003);
 async function getUserInfo(id) {
     try {
         const res = await http.get('/wgame/v1/colorgame/config', { gameId: id });
+        console.log('User info:', res);
         if(res.errCode === 0){
             //gid;
             //cashBalance;
             _minUnitBet = res.data.minUnitBet;
             _maxInitBet = res.data.maxUnitBet;
             if (typeof window.initData === 'function') {
-                window.initData(_minUnitBet, _maxInitBet, res.data.balance, res.data.isRecharge)
+                window.initData(
+                    _minUnitBet,
+                    _maxInitBet,
+                    res.data.balance,
+                    res.data.isRecharge,
+                    {
+                        one:res.data.multiplier["1"],
+                        two:res.data.multiplier["2"],
+                        three:res.data.multiplier["3"]
+                    })
             }
             showBalance(res.data.balance);
         }
-        console.log('User info:', res);
     } catch (error) {
         console.error('Error getting user info:', error);
         throw error;
