@@ -1369,7 +1369,10 @@ function rollDice() {
     playSound(audioQuick);
 
     isRolling = true;
-    document.getElementById('rollBtn').disabled = true;
+    // 自动游戏时不禁用按钮，允许随时停止
+    if (!isAutoPlaying) {
+        document.getElementById('rollBtn').disabled = true;
+    }
     const clearBtnEl = document.getElementById('clearBtn');
     if (clearBtnEl) clearBtnEl.disabled = true;
     document.querySelectorAll('.color-btn').forEach(b => b.disabled = true);
