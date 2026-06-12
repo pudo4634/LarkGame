@@ -650,10 +650,10 @@ function showToast(message) {
     toast.textContent = message;
     toast.style.opacity = '1';
     
-    // 3.5 秒后自动消失
+    // 3 秒后自动消失
     setTimeout(() => {
         toast.style.opacity = '0';
-    }, 3500);
+    }, 3000);
 }
 
 /** 触发中奖格子闪烁效果 */
@@ -1050,9 +1050,6 @@ function addBet(btn, forceQty, isAuto) {
     balance -= cost;
     updateUI();
     
-    // 触发向上消失动画
-    triggerFloatUpAnimation(btn, cost);
-    
     // 在自动页签下，更新选中样式
     if (currentTab === 'auto' && !isAutoPlaying) {
         document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
@@ -1063,19 +1060,6 @@ function addBet(btn, forceQty, isAuto) {
     
     btn.style.transform = 'scale(0.95)';
     setTimeout(() => btn.style.transform = '', 100);
-}
-
-// 触发下注金额向上消失动画
-function triggerFloatUpAnimation(btn, amount) {
-    const floatEl = document.createElement('div');
-    floatEl.className = 'bet-float-up';
-    floatEl.innerHTML = '<div class="chip-icon"></div>';
-    btn.appendChild(floatEl);
-    
-    // 动画结束后移除元素
-    floatEl.addEventListener('animationend', () => {
-        floatEl.remove();
-    });
 }
 
 function clearAllBets() {
@@ -1159,6 +1143,16 @@ function updateUI() {
         const btn      = document.querySelector('.color-btn[data-index="' + i + '"]');
         chipStack.innerHTML = '';
         if (betAmounts[i] > 0) {
+            const showCount = Math.min(bets[i], 8);
+            for (let c = 0; c < showCount; c++) {
+                const chip = document.createElement('div');
+                chip.className = 'chip';
+                if (c === showCount - 1 && bets[i] > 1) {
+                    chip.textContent = bets[i];
+                    chip.style.fontSize = bets[i] >= 100 ? '8px' : bets[i] >= 10 ? '9px' : '11px';
+                }
+                chipStack.appendChild(chip);
+            }
             label.textContent = betAmounts[i].toFixed(2);
             label.classList.add('show');
             btn.style.borderColor = 'rgba(255,255,255,0.6)';
@@ -1257,10 +1251,10 @@ function showWinOverlay(totalWin, maxHitCount) {
     // 显示图层
     overlay.classList.add('show');
     
-    // 2.0 秒后自动隐藏（在下一局开始前消失）
+    // 2.8 秒后自动隐藏（在下一局开始前消失）
     setTimeout(() => {
         overlay.classList.remove('show');
-    }, 2000);
+    }, 2800);
 }
 
 /**
@@ -1369,10 +1363,7 @@ function rollDice() {
     playSound(audioQuick);
 
     isRolling = true;
-    // 自动游戏时不禁用按钮，允许随时停止
-    if (!isAutoPlaying) {
-        document.getElementById('rollBtn').disabled = true;
-    }
+    document.getElementById('rollBtn').disabled = true;
     const clearBtnEl = document.getElementById('clearBtn');
     if (clearBtnEl) clearBtnEl.disabled = true;
     document.querySelectorAll('.color-btn').forEach(b => b.disabled = true);
@@ -1561,16 +1552,16 @@ function finishRoll(results) {
         activeDice = [];
         document.getElementById('diceContainer').innerHTML = '';
         _cleanupTimer = null;
-    }, 3500);
+    }, 3000);
     
-    // 如果是自动游戏，3.5 秒后执行下一次
+    // 如果是自动游戏，3 秒后执行下一次
     if (isAutoPlaying) {
         console.log('[AutoPlay] Waiting 3s for next game...');
         autoPlayTimer = setTimeout(() => {
             if (isAutoPlaying) {
                 executeAutoBet();
             }
-        }, 3500);
+        }, 3000);
     }
 }
 
