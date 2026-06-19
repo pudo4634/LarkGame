@@ -1144,7 +1144,7 @@ function updateAdvancedInputsState() {
 function updateUI() {
     const config = getBetConfig();
     const totalBet = betAmounts.reduce((a, b) => a + b, 0);
-    document.getElementById('balanceDisplay').textContent = balance.toFixed(2);
+    document.getElementById('balanceDisplay').querySelector('.balance-value').textContent = balance.toFixed(2);
     document.getElementById('totalBet').textContent = totalBet;
     
     // 更新 Max Bet 显示值

@@ -1050,16 +1050,47 @@
         .amount-value::before {
             content: '';
             display: inline-block;
-            width: 12px; height: 12px;
-            background: #0f0;
-            border-radius: 50%;
+            width: 16px; height: 16px;
+            background: url('assets/chip.webp') no-repeat center center;
+            background-size: contain;
             margin-right: 4px;
             vertical-align: middle;
         }
         .balance-display {
-            font-size: 16px;
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(calc(340px / 2 - 100%));
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
             font-weight: bold;
             color: #ffd700;
+            background: rgba(58, 58, 62, 0.9);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #555;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+            max-width: 340px;
+            min-width: 120px;
+        }
+        .balance-display .chip-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: url('assets/chip.webp') no-repeat center center;
+            background-size: contain;
+            flex-shrink: 0;
+        }
+        .balance-display .balance-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffd700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* ========= 金币雨 ========= */
@@ -1089,6 +1120,12 @@
     </style>
 </head>
 <body>
+
+    <!-- 余额显示 -->
+    <div class="balance-display" id="balanceDisplay">
+        <span class="chip-icon"></span>
+        <span class="balance-value">10000.00</span>
+    </div>
 
     <!-- 历史记录栏（顶部横向） -->
     <div class="history-bar" id="historyBar">
@@ -1316,7 +1353,6 @@
             <span class="amount-label">Total Bet</span>
             <span class="amount-value" id="totalBet">0</span>
         </div>
-        <div class="balance-display" id="balanceDisplay">1000.00</div>
     </div>
     
     <!-- 音效 -->
