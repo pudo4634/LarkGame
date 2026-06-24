@@ -47,7 +47,7 @@
             background: #3a3a3e;
             border-radius: 8px;
             padding: 6px 8px;
-            margin-top: 0;
+            margin-top: 32px;
             border: 1px solid #444;
             display: flex;
             gap: 4px;
@@ -107,7 +107,7 @@
         .payout-panel {
             position: absolute;
             left: 6px;
-            top: 40px;
+            top: 25px;
             background: rgba(50,50,55,0.9);
             border-radius: 6px;
             padding: 0;
@@ -377,7 +377,7 @@
             width: 70%;
             max-width: 320px;
             position: relative;
-            margin-top: -150px;
+            margin-top: -180px;
         }
         .color-panel {
             background: #4a4a4e;
@@ -1063,29 +1063,29 @@
             transform: translateX(calc(340px / 2 - 100%));
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 14px;
+            gap: 4px;
+            font-size: 12px;
             font-weight: bold;
             color: #ffd700;
             background: rgba(58, 58, 62, 0.9);
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 4px 12px;
+            border-radius: 6px;
             border: 1px solid #555;
             z-index: 100;
             backdrop-filter: blur(4px);
             max-width: 340px;
-            min-width: 120px;
+            min-width: 100px;
         }
         .balance-display .chip-icon {
-            width: 24px;
-            height: 24px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: url('assets/chip.webp') no-repeat center center;
             background-size: contain;
             flex-shrink: 0;
         }
         .balance-display .balance-value {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             color: #ffd700;
             white-space: nowrap;
@@ -1116,6 +1116,13 @@
             .machine-wrapper { transform: scale(0.85); margin-top: 0; }
             .color-panel { gap: 8px; padding: 10px; }
             .payout-panel { left: 2px; padding: 6px 8px; }
+        }
+
+        /* 移动端 H5 适配 */
+        @media (max-width: 768px) {
+            .color-btn {
+                aspect-ratio: 4/2.6;
+            }
         }
     </style>
 </head>
